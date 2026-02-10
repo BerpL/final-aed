@@ -1,0 +1,246 @@
+/* Estilos para el Sistema de Reserva de Hoteles */
+
+/* Tabla de datos */
+.custom-table {
+    -fx-font-size: 11px;
+    -fx-font-family: "Arial";
+}
+
+.custom-table .column-header-background {
+    -fx-background-color: #E0E0E0;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.custom-table .column-header {
+    -fx-background-color: #E0E0E0;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 0 1 1 0;
+    -fx-padding: 4 8 4 8;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+}
+
+.custom-table .table-row-cell {
+    -fx-cell-size: 26px;
+    -fx-border-color: #D0D0D0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.custom-table .table-row-cell:even {
+    -fx-background-color: #FFFFFF;
+}
+
+.custom-table .table-row-cell:odd {
+    -fx-background-color: #F8F8F8;
+}
+
+.custom-table .table-cell {
+    -fx-border-color: #D0D0D0;
+    -fx-border-width: 0 1 1 0;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 11px;
+    -fx-text-fill: #333333;
+}
+
+.custom-table .table-row-cell:selected {
+    -fx-background-color: #D0E8FF;
+}
+
+/* Botones de acción en tablas */
+.action-button {
+    -fx-pref-width: 20px;
+    -fx-pref-height: 20px;
+    -fx-min-width: 20px;
+    -fx-min-height: 20px;
+    -fx-max-width: 20px;
+    -fx-max-height: 20px;
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
+    -fx-cursor: hand;
+}
+
+.action-button:hover {
+    -fx-opacity: 0.8;
+}
+
+/* Campos de formulario */
+.form-field {
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-pref-height: 24px;
+}
+
+.form-label {
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-text-fill: #333333;
+    -fx-pref-width: 80px;
+}
+
+/* Panel de formulario */
+.form-panel {
+    -fx-background-color: #F8F8F8;
+    -fx-border-color: #D0D0D0;
+    -fx-border-width: 1;
+    -fx-padding: 16;
+}
+
+/* Panel de navegación */
+.nav-item {
+    -fx-pref-height: 36px;
+    -fx-max-height: 36px;
+    -fx-padding: 8 12 8 12;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-background-color: #D8D8D8;
+}
+
+.nav-item-selected {
+    -fx-background-color: #0078D4;
+}
+
+.nav-item-selected .label {
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Botones principales */
+.primary-button {
+    -fx-background-color: #0078D4;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-padding: 6 16 6 16;
+    -fx-background-radius: 2px;
+    -fx-border-color: #005A9E;
+    -fx-border-width: 1;
+    -fx-border-radius: 2px;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #005A9E;
+}
+
+.secondary-button {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #333333;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-padding: 6 16 6 16;
+    -fx-background-radius: 2px;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 2px;
+    -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+/* TextArea sin sombras ni bordes azules */
+.custom-textarea {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 4 8 4 8;
+    -fx-effect: null;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-control-inner-background: #FFFFFF;
+    -fx-text-box-border: #A0A0A0;
+}
+
+.custom-textarea:focused {
+    -fx-border-color: #A0A0A0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-effect: null;
+}
+
+.custom-textarea .content {
+    -fx-background-color: #FFFFFF;
+    -fx-effect: null;
+}
+
+/* Ocultar scroll horizontal del TextArea */
+.custom-textarea .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-min-width: 0;
+    -fx-max-width: 0;
+}
+
+.custom-textarea .scroll-bar:horizontal .track {
+    -fx-opacity: 0;
+}
+
+.custom-textarea .scroll-bar:horizontal .thumb {
+    -fx-opacity: 0;
+}
+
+/* Checkboxes personalizados según diseño aed.pen */
+.check-box {
+    -fx-font-size: 11px;
+    -fx-font-family: "Arial";
+    -fx-text-fill: #333333;
+    -fx-label-padding: 0 0 0 4;
+}
+
+.check-box .box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #005A9E;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-max-width: 16;
+    -fx-max-height: 16;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #0078D4;
+    -fx-border-color: #005A9E;
+    -fx-border-width: 1;
+}
+
+.check-box .mark {
+    -fx-background-color: transparent;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+    -fx-opacity: 0;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #FFFFFF;
+    -fx-opacity: 1.0;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+    -fx-shape: "M 2.5 7.5 L 6.5 11.5 L 13.5 4.5";
+    -fx-scale-shape: false;
+}
+
+.check-box:hover .box {
+    -fx-border-color: #0078D4;
+}
+
+.check-box:focused .box {
+    -fx-border-color: #0078D4;
+    -fx-border-width: 1;
+}
+
+.check-box:armed .box {
+    -fx-border-color: #0078D4;
+}
+

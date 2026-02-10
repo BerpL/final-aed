@@ -1,0 +1,21 @@
+# Archivos compilados
+/bin/
+*.class
+
+# Archivos del workspace de Eclipse (específicos del workspace, no del proyecto)
+.metadata/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# JavaFX SDK (debe descargarse manualmente según README)
+/javafx-sdk/
+
+# Librerías externas (deben descargarse manualmente según README)
+/lib/
+
+# Archivos temporales
+*.log
+*.tmp
+*~
