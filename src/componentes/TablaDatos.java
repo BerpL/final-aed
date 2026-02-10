@@ -22,6 +22,11 @@ public class TablaDatos extends VBox {
     @SuppressWarnings("unused")
     private String[] columnas; // Se usa en el código, pero Eclipse no lo detecta correctamente
     
+    // Callbacks para acciones de botones
+    private java.util.function.Consumer<Integer> onVer;
+    private java.util.function.Consumer<Integer> onEditar;
+    private java.util.function.Consumer<Integer> onEliminar;
+    
     public TablaDatos(String[] columnas) {
         this.columnas = columnas;
         // Borde exterior de la tabla: #A0A0A0 (como en el diseño)
@@ -60,6 +65,26 @@ public class TablaDatos extends VBox {
                             BotonAccion btnVer = BotonAccion.crearBotonVer();
                             BotonAccion btnEditar = BotonAccion.crearBotonEditar();
                             BotonAccion btnEliminar = BotonAccion.crearBotonEliminar();
+                            
+                            final int filaIndex = getIndex();
+                            
+                            btnVer.setOnMouseClicked(_ -> {
+                                if (onVer != null) {
+                                    onVer.accept(filaIndex);
+                                }
+                            });
+                            
+                            btnEditar.setOnMouseClicked(_ -> {
+                                if (onEditar != null) {
+                                    onEditar.accept(filaIndex);
+                                }
+                            });
+                            
+                            btnEliminar.setOnMouseClicked(_ -> {
+                                if (onEliminar != null) {
+                                    onEliminar.accept(filaIndex);
+                                }
+                            });
                             
                             panel.getChildren().addAll(btnVer, btnEditar, btnEliminar);
                             setGraphic(panel);
@@ -360,5 +385,18 @@ public class TablaDatos extends VBox {
     
     public TableView<ObservableList<String>> getTabla() {
         return tabla;
+    }
+    
+    // Métodos para configurar callbacks
+    public void setOnVer(java.util.function.Consumer<Integer> callback) {
+        this.onVer = callback;
+    }
+    
+    public void setOnEditar(java.util.function.Consumer<Integer> callback) {
+        this.onEditar = callback;
+    }
+    
+    public void setOnEliminar(java.util.function.Consumer<Integer> callback) {
+        this.onEliminar = callback;
     }
 }

@@ -10,7 +10,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import componentes.BarraEstado;
-import componentes.BarraMenu;
 import componentes.BarraTitulo;
 import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
@@ -24,7 +23,6 @@ public class HuespedesWindow {
     
     private BorderPane root;
     private BarraTitulo barraTitulo;
-    private BarraMenu barraMenu;
     private PanelNavegacion panelNavegacion;
     private BarraEstado barraEstado;
     private CampoFormulario campoDNI;
@@ -49,9 +47,6 @@ public class HuespedesWindow {
         barraTitulo = new BarraTitulo("Sistema de Reserva de Hoteles - Gestión de Huéspedes");
         root.setTop(barraTitulo);
         
-        // Barra de menú
-        barraMenu = new BarraMenu();
-        
         // Panel principal
         BorderPane panelPrincipal = new BorderPane();
         panelPrincipal.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
@@ -65,12 +60,7 @@ public class HuespedesWindow {
         VBox panelContenido = crearPanelContenido();
         panelPrincipal.setCenter(panelContenido);
         
-        // Contenedor para menú y contenido principal
-        VBox contenedorPrincipal = new VBox();
-        contenedorPrincipal.getChildren().addAll(barraMenu, panelPrincipal);
-        // Hacer que el panelPrincipal ocupe todo el espacio vertical disponible
-        VBox.setVgrow(panelPrincipal, javafx.scene.layout.Priority.ALWAYS);
-        root.setCenter(contenedorPrincipal);
+        root.setCenter(panelPrincipal);
         
         // Barra de estado
         barraEstado = new BarraEstado();
@@ -148,6 +138,7 @@ public class HuespedesWindow {
         cmbGenero.setPrefHeight(24);
         cmbGenero.setMinHeight(24);
         cmbGenero.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbGenero, "Seleccionar género");
         panelGenero.getChildren().addAll(lblGenero, cmbGenero);
         
         HBox panelNacionalidad = new HBox(12);
@@ -161,6 +152,7 @@ public class HuespedesWindow {
         cmbNacionalidad.setPrefHeight(24);
         cmbNacionalidad.setMinHeight(24);
         cmbNacionalidad.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbNacionalidad, "Seleccionar nacionalidad");
         panelNacionalidad.getChildren().addAll(lblNacionalidad, cmbNacionalidad);
         
         campoFechaNac = new CampoFormulario("Fecha Nac", 120);
@@ -182,6 +174,7 @@ public class HuespedesWindow {
         cmbTipoDoc.setPrefHeight(24);
         cmbTipoDoc.setMinHeight(24);
         cmbTipoDoc.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbTipoDoc, "Seleccionar tipo");
         panelTipoDoc.getChildren().addAll(lblTipoDoc, cmbTipoDoc);
         
         fila4.getChildren().addAll(campoDireccion, panelTipoDoc);
@@ -193,6 +186,8 @@ public class HuespedesWindow {
         chkVIP.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         chkNewsletter = new CheckBox("Recibir promociones por email");
         chkNewsletter.setFont(Constantes.FUENTE_NORMAL);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkVIP);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkNewsletter);
         fila5.getChildren().addAll(chkVIP, chkNewsletter);
         
         // Botones
@@ -204,6 +199,37 @@ public class HuespedesWindow {
                            "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_BLANCO.toString().substring(2, 8) + 
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnAgregar.setOnAction(_ -> {
+            // Validar campos
+            if (campoDNI.getValor().isEmpty() || campoNombre.getValor().isEmpty()) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Por favor complete todos los campos obligatorios.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+            } else {
+                // Agregar a la tabla
+                String vip = chkVIP.isSelected() ? "Si" : "No";
+                tablaHuespedes.agregarFila(new String[]{
+                    String.format("%04d", tablaHuespedes.getTabla().getItems().size() + 1),
+                    campoNombre.getValor() + " " + campoApellidos.getValor(),
+                    campoDNI.getValor(),
+                    campoTelefono.getValor(),
+                    vip,
+                    ""
+                });
+                
+                // Mostrar diálogo de éxito
+                ventanas.dialogos.DialogoMensaje dialogoExito = 
+                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                        "El huésped ha sido registrado exitosamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                dialogoExito.mostrar();
+                
+                // Limpiar formulario
+                limpiarFormulario();
+            }
+        });
         
         Button btnLimpiar = new Button("Limpiar");
         btnLimpiar.setFont(Constantes.FUENTE_NORMAL);
@@ -211,6 +237,7 @@ public class HuespedesWindow {
                           "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_PRINCIPAL.toString().substring(2, 8) + 
                           "; -fx-border-color: #" + Constantes.COLOR_BORDE_MEDIO.toString().substring(2, 8) + 
                           "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnLimpiar.setOnAction(_ -> limpiarFormulario());
         
         panelBotones.getChildren().addAll(btnAgregar, btnLimpiar);
         
@@ -235,6 +262,58 @@ public class HuespedesWindow {
         // Hacer que la tabla ocupe todo el espacio disponible
         VBox.setVgrow(tablaHuespedes, javafx.scene.layout.Priority.ALWAYS);
         
+        // Configurar callbacks para los botones de acción
+        tablaHuespedes.setOnVer(fila -> {
+            String id = tablaHuespedes.getValor(fila, 0);
+            String nombre = tablaHuespedes.getValor(fila, 1);
+            String documento = tablaHuespedes.getValor(fila, 2);
+            String telefono = tablaHuespedes.getValor(fila, 3);
+            boolean vip = "Si".equals(tablaHuespedes.getValor(fila, 4));
+            
+            ventanas.dialogos.DialogoDetalleHuesped dialogo = 
+                new ventanas.dialogos.DialogoDetalleHuesped(id, nombre, documento, telefono, 
+                    "email@ejemplo.com", "Peruana", vip);
+            dialogo.mostrar();
+        });
+        
+        tablaHuespedes.setOnEditar(fila -> {
+            String documento = tablaHuespedes.getValor(fila, 2);
+            String nombreCompleto = tablaHuespedes.getValor(fila, 1);
+            String telefono = tablaHuespedes.getValor(fila, 3);
+            boolean vip = "Si".equals(tablaHuespedes.getValor(fila, 4));
+            
+            // Separar nombres y apellidos (asumiendo formato "Nombres Apellidos")
+            String[] partesNombre = nombreCompleto.split(" ", 2);
+            String nombres = partesNombre.length > 0 ? partesNombre[0] : "";
+            String apellidos = partesNombre.length > 1 ? partesNombre[1] : "";
+            
+            ventanas.dialogos.DialogoEditarHuesped dialogo = 
+                new ventanas.dialogos.DialogoEditarHuesped(documento, nombres, apellidos, 
+                    telefono, "email@ejemplo.com", "Peruana", vip);
+            dialogo.mostrar();
+        });
+        
+        tablaHuespedes.setOnEliminar(fila -> {
+            String nombre = tablaHuespedes.getValor(fila, 1);
+            ventanas.dialogos.DialogoConfirmacion dialogo = 
+                new ventanas.dialogos.DialogoConfirmacion(
+                    "Confirmar Eliminación",
+                    "¿Está seguro que desea eliminar al huésped?",
+                    nombre,
+                    "alert-triangle",
+                    true // esEliminacion
+                );
+            dialogo.mostrar();
+            if (dialogo.isConfirmado()) {
+                tablaHuespedes.eliminarFila(fila);
+                ventanas.dialogos.DialogoMensaje dialogoExito = 
+                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                        "El huésped ha sido eliminado correctamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                dialogoExito.mostrar();
+            }
+        });
+        
         // Datos de ejemplo
         tablaHuespedes.agregarFila(new String[]{"0001", "Juan Carlos Cepeda de la Cruz", "012345678", "987654321", "Si", ""});
         tablaHuespedes.agregarFila(new String[]{"0002", "Maria Rosa Rodriguez Perez", "987654321", "912345678", "No", ""});
@@ -251,5 +330,20 @@ public class HuespedesWindow {
     
     public PanelNavegacion getPanelNavegacion() {
         return panelNavegacion;
+    }
+    
+    private void limpiarFormulario() {
+        campoDNI.setValor("");
+        campoNombre.setValor("");
+        campoApellidos.setValor("");
+        campoTelefono.setValor("");
+        campoEmail.setValor("");
+        campoDireccion.setValor("");
+        campoFechaNac.setValor("");
+        cmbTipoDoc.getSelectionModel().clearSelection();
+        cmbGenero.getSelectionModel().clearSelection();
+        cmbNacionalidad.getSelectionModel().clearSelection();
+        chkVIP.setSelected(false);
+        chkNewsletter.setSelected(false);
     }
 }

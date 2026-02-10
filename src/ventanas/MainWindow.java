@@ -9,7 +9,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import componentes.BarraEstado;
-import componentes.BarraMenu;
 import componentes.BarraTitulo;
 import componentes.PanelNavegacion;
 import utilidades.Constantes;
@@ -22,7 +21,6 @@ public class MainWindow {
     
     private BorderPane root;
     private BarraTitulo barraTitulo;
-    private BarraMenu barraMenu;
     private PanelNavegacion panelNavegacion;
     private BarraEstado barraEstado;
     private VBox panelContenido;
@@ -35,9 +33,6 @@ public class MainWindow {
         // Barra de título
         barraTitulo = new BarraTitulo("Sistema de Reserva de Hoteles");
         root.setTop(barraTitulo);
-        
-        // Barra de menú
-        barraMenu = new BarraMenu();
         
         // Panel principal con navegación y contenido
         BorderPane panelPrincipal = new BorderPane();
@@ -52,11 +47,7 @@ public class MainWindow {
         panelContenido = crearPanelContenido();
         panelPrincipal.setCenter(panelContenido);
         
-        // Contenedor para menú y contenido principal
-        VBox contenedorPrincipal = new VBox();
-        contenedorPrincipal.getChildren().addAll(barraMenu, panelPrincipal);
-        VBox.setVgrow(panelPrincipal, javafx.scene.layout.Priority.ALWAYS);
-        root.setCenter(contenedorPrincipal);
+        root.setCenter(panelPrincipal);
         
         // Barra de estado
         barraEstado = new BarraEstado();

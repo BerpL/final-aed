@@ -28,9 +28,27 @@ public class Main extends Application {
 			
 			// Cargar CSS si existe
 			try {
-				scene.getStylesheets().add(getClass().getResource("/styles/estilos.css").toExternalForm());
+				java.net.URL cssUrl = getClass().getResource("/main/resources/styles/estilos.css");
+				if (cssUrl != null) {
+					String cssPath = cssUrl.toExternalForm();
+					scene.getStylesheets().add(cssPath);
+					System.out.println("CSS cargado: " + cssPath);
+				} else {
+					System.err.println("Error al cargar CSS: recurso /main/resources/styles/estilos.css no encontrado en el classpath");
+				}
+				
+				// Cargar tema AED para ComboBox
+				java.net.URL themeUrl = getClass().getResource("/main/resources/styles/aed-theme.css");
+				if (themeUrl != null) {
+					String themePath = themeUrl.toExternalForm();
+					scene.getStylesheets().add(themePath);
+					System.out.println("Tema AED cargado: " + themePath);
+				} else {
+					System.err.println("Advertencia: tema AED no encontrado en /main/resources/styles/aed-theme.css");
+				}
 			} catch (Exception e) {
-				// CSS opcional, continuar sin él
+				System.err.println("Error al cargar CSS: " + e.getMessage());
+				e.printStackTrace();
 			}
 			
 			primaryStage.setScene(scene);

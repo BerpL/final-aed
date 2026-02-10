@@ -10,7 +10,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import componentes.BarraEstado;
-import componentes.BarraMenu;
 import componentes.BarraTitulo;
 import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
@@ -24,7 +23,6 @@ public class TiposHabitacionWindow {
     
     private BorderPane root;
     private BarraTitulo barraTitulo;
-    private BarraMenu barraMenu;
     private PanelNavegacion panelNavegacion;
     private BarraEstado barraEstado;
     private CampoFormulario campoCodigo;
@@ -45,8 +43,6 @@ public class TiposHabitacionWindow {
         barraTitulo = new BarraTitulo("Sistema de Reserva de Hoteles - Tipos de Habitación");
         root.setTop(barraTitulo);
         
-        barraMenu = new BarraMenu();
-        
         BorderPane panelPrincipal = new BorderPane();
         panelPrincipal.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -57,10 +53,7 @@ public class TiposHabitacionWindow {
         VBox panelContenido = crearPanelContenido();
         panelPrincipal.setCenter(panelContenido);
         
-        VBox contenedorPrincipal = new VBox();
-        contenedorPrincipal.getChildren().addAll(barraMenu, panelPrincipal);
-        VBox.setVgrow(panelPrincipal, javafx.scene.layout.Priority.ALWAYS);
-        root.setCenter(contenedorPrincipal);
+        root.setCenter(panelPrincipal);
         
         barraEstado = new BarraEstado();
         barraEstado.setEstado("5 tipos registrados");
@@ -124,6 +117,7 @@ public class TiposHabitacionWindow {
         cmbCapacidad.setPrefHeight(24);
         cmbCapacidad.setMinHeight(24);
         cmbCapacidad.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbCapacidad, "Seleccionar");
         panelCapacidad.getChildren().addAll(lblCapacidad, cmbCapacidad);
         
         HBox panelCamas = new HBox(12);
@@ -137,6 +131,7 @@ public class TiposHabitacionWindow {
         cmbCamas.setPrefHeight(24);
         cmbCamas.setMinHeight(24);
         cmbCamas.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbCamas, "Seleccionar tipo");
         panelCamas.getChildren().addAll(lblCamas, cmbCamas);
         
         campoArea = new CampoFormulario("Área (m²)", 80);
@@ -157,6 +152,11 @@ public class TiposHabitacionWindow {
         chkAC.setFont(Constantes.FUENTE_PEQUENA);
         chkMinibar.setFont(Constantes.FUENTE_PEQUENA);
         chkJacuzzi.setFont(Constantes.FUENTE_PEQUENA);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkWifi);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkTV);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkAC);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkMinibar);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkJacuzzi);
         fila3.getChildren().addAll(lblAmenidades, chkWifi, chkTV, chkAC, chkMinibar, chkJacuzzi);
         
         HBox panelBotones = new HBox(8);
@@ -195,6 +195,57 @@ public class TiposHabitacionWindow {
         String[] columnas = {"Código", "Nombre del Tipo", "Precio Base", "Acciones"};
         tablaTipos = new TablaDatos(columnas);
         VBox.setVgrow(tablaTipos, javafx.scene.layout.Priority.ALWAYS);
+        
+        // Configurar callbacks para los botones de acción
+        tablaTipos.setOnVer(fila -> {
+            String codigo = tablaTipos.getValor(fila, 0);
+            String nombre = tablaTipos.getValor(fila, 1);
+            String precio = tablaTipos.getValor(fila, 2);
+            
+            // Datos de ejemplo para capacidad y descripción
+            String capacidad = "4 personas";
+            String descripcion = "Suite de lujo con vista panorámica, jacuzzi privado y servicio de mayordomo.";
+            
+            ventanas.dialogos.DialogoDetalleTipoHabitacion dialogo = 
+                new ventanas.dialogos.DialogoDetalleTipoHabitacion(codigo, nombre, capacidad, precio, descripcion);
+            dialogo.mostrar();
+        });
+        
+        tablaTipos.setOnEditar(fila -> {
+            String codigo = tablaTipos.getValor(fila, 0);
+            String nombre = tablaTipos.getValor(fila, 1);
+            String precio = tablaTipos.getValor(fila, 2);
+            
+            // Datos de ejemplo para capacidad y descripción
+            String capacidad = "4";
+            String descripcion = "Suite de lujo con vista panorámica, jacuzzi privado y servicio de mayordomo.";
+            
+            ventanas.dialogos.DialogoEditarTipoHabitacion dialogo = 
+                new ventanas.dialogos.DialogoEditarTipoHabitacion(codigo, nombre, capacidad, precio, descripcion);
+            dialogo.mostrar();
+        });
+        
+        tablaTipos.setOnEliminar(fila -> {
+            String codigo = tablaTipos.getValor(fila, 0);
+            String nombre = tablaTipos.getValor(fila, 1);
+            ventanas.dialogos.DialogoConfirmacion dialogo = 
+                new ventanas.dialogos.DialogoConfirmacion(
+                    "Confirmar Eliminación",
+                    "¿Está seguro que desea eliminar este tipo de habitación?",
+                    nombre + " (" + codigo + ")",
+                    "trash-2",
+                    true // esEliminacion
+                );
+            dialogo.mostrar();
+            if (dialogo.isConfirmado()) {
+                tablaTipos.eliminarFila(fila);
+                ventanas.dialogos.DialogoMensaje dialogoExito = 
+                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                        "El tipo de habitación ha sido eliminado correctamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                dialogoExito.mostrar();
+            }
+        });
         
         tablaTipos.agregarFila(new String[]{"SUITE-PRES", "Suite Presidencial", "S/. 500.00", ""});
         tablaTipos.agregarFila(new String[]{"SUITE", "Suite", "S/. 350.00", ""});

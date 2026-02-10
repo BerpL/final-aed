@@ -20,14 +20,7 @@ public class BarraMenu extends HBox {
         setPadding(new Insets(0, 4, 0, 4));
         setSpacing(0);
         
-        String[] itemsMenu = {"Mantenimiento", "Reservas", "Consultas", "Reportes", "Ayuda"};
-        
-        for (String item : itemsMenu) {
-            Label menuItem = new Label(item);
-            menuItem.setFont(Constantes.FUENTE_MENU);
-            menuItem.setTextFill(Constantes.COLOR_NEGRO);
-            menuItem.setPadding(new Insets(4, 12, 4, 12));
-            getChildren().add(menuItem);
-        }
+        // Barra de menú vacía - las pestañas sin funcionalidad fueron eliminadas
+        // La navegación se realiza a través del panel lateral (PanelNavegacion)
     }
 }

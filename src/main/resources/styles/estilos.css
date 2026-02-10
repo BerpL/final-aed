@@ -217,18 +217,21 @@
 
 .check-box .mark {
     -fx-background-color: transparent;
-    -fx-pref-width: 12;
-    -fx-pref-height: 12;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
     -fx-opacity: 0;
+    -fx-shape: null;
 }
 
 .check-box:selected .mark {
     -fx-background-color: #FFFFFF;
     -fx-opacity: 1.0;
-    -fx-pref-width: 12;
-    -fx-pref-height: 12;
-    -fx-shape: "M 2.5 7.5 L 6.5 11.5 L 13.5 4.5";
-    -fx-scale-shape: false;
+    -fx-pref-width: 10;
+    -fx-pref-height: 10;
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
 }
 
 .check-box:hover .box {

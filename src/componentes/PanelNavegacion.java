@@ -30,7 +30,11 @@ public class PanelNavegacion extends VBox {
         setStyle("-fx-background-color: #" + Constantes.COLOR_PANEL_LATERAL.toString().substring(2, 8) + 
                  "; -fx-border-color: #" + Constantes.COLOR_BORDE_MEDIO.toString().substring(2, 8) + 
                  "; -fx-border-width: 0 1 0 0;");
-        setPadding(new Insets(8, 0, 8, 0));
+        setPadding(new Insets(0, 0, 8, 0));
+        
+        // Sección de perfil de usuario
+        VBox seccionPerfil = crearSeccionPerfil();
+        getChildren().add(seccionPerfil);
         
         // Items de navegación (incluyendo "Navegación" como primer item)
         String[] items = {"Navegación", "Huéspedes", "Habitaciones", "Tipos Habitación", "Reservas", "Reportes"};
@@ -48,6 +52,25 @@ public class PanelNavegacion extends VBox {
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
         VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
         getChildren().add(spacer);
+    }
+    
+    private VBox crearSeccionPerfil() {
+        VBox seccionPerfil = new VBox(8);
+        seccionPerfil.setAlignment(Pos.CENTER);
+        seccionPerfil.setPadding(new Insets(16, 12, 16, 12));
+        seccionPerfil.setStyle("-fx-background-color: #" + Constantes.COLOR_PANEL_LATERAL.toString().substring(2, 8) + ";");
+        
+        // Icono de avatar/perfil
+        IconoSimple iconoAvatar = IconoSimple.crearIconoUsuario(40, Constantes.COLOR_TEXTO_PRINCIPAL);
+        
+        // Label con el nombre de usuario (mocked: "admin")
+        Label lblUsuario = new Label("admin");
+        lblUsuario.setFont(Constantes.FUENTE_NORMAL);
+        lblUsuario.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
+        
+        seccionPerfil.getChildren().addAll(iconoAvatar, lblUsuario);
+        
+        return seccionPerfil;
     }
     
     private HBox crearItemNavegacion(String texto, String tipoIcono, final int indice) {

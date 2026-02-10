@@ -1,0 +1,489 @@
+/* ============================================
+   AED THEME - ComboBox Styles
+   Estilos modernos para ComboBox según diseño aed.pen
+   ============================================ */
+
+/* ComboBox base - estilo moderno corporativo */
+.aed-combo {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+    -fx-effect: null;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+}
+
+/* Estado hover */
+.aed-combo:hover {
+    -fx-border-color: #0078D4;
+}
+
+/* Estado focused */
+.aed-combo:focused {
+    -fx-border-color: #0078D4;
+    -fx-border-width: 1;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Estado disabled */
+.aed-combo:disabled {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: #D0D0D0;
+    -fx-opacity: 0.6;
+}
+
+/* ============================================
+   Button Cell (valor seleccionado visible)
+   CRÍTICO: Forzar text-fill para que siempre sea visible
+   ============================================ */
+.aed-combo .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+}
+
+/* Estado cuando hay valor seleccionado - selector más específico */
+.aed-combo .list-cell:filled:selected {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+}
+
+/* Estado cuando hay valor seleccionado */
+.aed-combo .list-cell:filled {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+}
+
+/* Estado cuando está abierto */
+.aed-combo:showing .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+}
+
+/* Estado cuando está vacío (muestra prompt text) */
+.aed-combo .list-cell:empty {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #999999;
+}
+
+/* ============================================
+   Arrow Button (flecha del dropdown)
+   ============================================ */
+.aed-combo .arrow-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 4 0 0;
+}
+
+.aed-combo .arrow-button:hover {
+    -fx-background-color: #F5F5F5;
+}
+
+.aed-combo .arrow-button:pressed {
+    -fx-background-color: #E0E0E0;
+}
+
+/* Flecha del dropdown */
+.aed-combo .arrow-button .arrow {
+    -fx-background-color: #333333;
+    -fx-padding: 4 4 4 4;
+    -fx-shape: "M 0 0 L 4 4 L 8 0 Z";
+    -fx-scale-shape: false;
+}
+
+.aed-combo:hover .arrow-button .arrow {
+    -fx-background-color: #0078D4;
+}
+
+.aed-combo:focused .arrow-button .arrow {
+    -fx-background-color: #0078D4;
+}
+
+/* ============================================
+   ComboBox Editable - TextField interno
+   ============================================ */
+.aed-combo .text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #999999;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-padding: 4 8 4 8;
+}
+
+.aed-combo .text-field:focused {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* ============================================
+   Popup del ComboBox
+   El popup se crea dinámicamente, usar selector global con contexto
+   ============================================ */
+.combo-box-popup .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 4, 0, 0, 2);
+}
+
+/* Items del popup - CRÍTICO: text-fill siempre visible */
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-padding: 6 12 6 12;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-border-width: 0;
+}
+
+/* Hover en items del popup */
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #E8F4FD;
+    -fx-text-fill: #000000;
+}
+
+/* Item seleccionado en el popup - selector más específico */
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: #0078D4;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Item seleccionado con hover */
+.combo-box-popup .list-view .list-cell:selected:hover {
+    -fx-background-color: #005A9E;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Item vacío (separador) */
+.combo-box-popup .list-view .list-cell:empty {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ============================================
+   Scrollbar del popup (opcional, para mejor UX)
+   ============================================ */
+.combo-box-popup .list-view .scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.combo-box-popup .list-view .scroll-bar .track {
+    -fx-background-color: #F0F0F0;
+}
+
+.combo-box-popup .list-view .scroll-bar .thumb {
+    -fx-background-color: #C0C0C0;
+}
+
+.combo-box-popup .list-view .scroll-bar .thumb:hover {
+    -fx-background-color: #A0A0A0;
+}
+
+/* ============================================
+   AED THEME - CheckBox Styles
+   Estilos modernos para CheckBox según diseño aed.pen
+   Usar clase "aed-check" para aplicar estos estilos
+   ============================================ */
+
+/* CheckBox base con clase aed-check - mayor especificidad */
+.check-box.aed-check {
+    -fx-font-size: 11px;
+    -fx-font-family: "Arial";
+    -fx-text-fill: #333333;
+    -fx-label-padding: 0 0 0 4;
+}
+
+/* Caja del checkbox - estado normal */
+.check-box.aed-check .box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #005A9E;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-max-width: 16;
+    -fx-max-height: 16;
+}
+
+/* Caja cuando está seleccionado */
+.check-box.aed-check:selected .box {
+    -fx-background-color: #0078D4;
+    -fx-border-color: #005A9E;
+    -fx-border-width: 1;
+}
+
+/* Caja en estado hover */
+.check-box.aed-check:hover .box {
+    -fx-border-color: #0078D4;
+}
+
+/* Caja en estado focused */
+.check-box.aed-check:focused .box {
+    -fx-border-color: #0078D4;
+    -fx-border-width: 1;
+}
+
+/* Caja en estado armed (presionado) */
+.check-box.aed-check:armed .box {
+    -fx-border-color: #0078D4;
+}
+
+/* Caja en estado disabled */
+.check-box.aed-check:disabled .box {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: #D0D0D0;
+    -fx-opacity: 0.6;
+}
+
+/* Mark (checkmark) - oculto por defecto */
+.check-box.aed-check .mark {
+    -fx-background-color: transparent;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+    -fx-shape: null;
+}
+
+/* Mark cuando está seleccionado - visible */
+.check-box.aed-check:selected .mark {
+    -fx-background-color: #FFFFFF;
+    -fx-opacity: 1.0;
+    -fx-pref-width: 10;
+    -fx-pref-height: 10;
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
+    /* Shape del checkmark - usar el shape por defecto de JavaFX Modena */
+    /* Es un polígono cerrado que forma un checkmark */
+    -fx-shape: "M 0.0 4.5 L 2.0 6.5 L 6.0 2.5 L 6.0 1.5 L 2.0 5.5 L 0.0 3.5 Z";
+    -fx-scale-shape: false;
+}
+
+/* Texto del CheckBox - siempre visible */
+.check-box.aed-check .text {
+    -fx-fill: #333333;
+}
+
+/* Texto cuando está disabled */
+.check-box.aed-check:disabled .text {
+    -fx-fill: #999999;
+}
+
+/* Texto cuando está selected - mantener legible */
+.check-box.aed-check:selected .text {
+    -fx-fill: #333333;
+}
+
+/* ============================================
+   AED THEME - DatePicker Styles
+   Estilos modernos para DatePicker según diseño aed.pen
+   Usar clase "aed-date-picker" para aplicar estos estilos
+   ============================================ */
+
+/* DatePicker base con clase aed-date-picker */
+.date-picker.aed-date-picker {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+    -fx-effect: null;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+}
+
+/* Estado hover */
+.date-picker.aed-date-picker:hover {
+    -fx-border-color: #0078D4;
+}
+
+/* Estado focused */
+.date-picker.aed-date-picker:focused {
+    -fx-border-color: #0078D4;
+    -fx-border-width: 1;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Estado disabled */
+.date-picker.aed-date-picker:disabled {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: #D0D0D0;
+    -fx-opacity: 0.6;
+}
+
+/* TextField interno del DatePicker - CRÍTICO: texto siempre visible */
+.date-picker.aed-date-picker .text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #999999;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+    -fx-padding: 4 8 4 8;
+}
+
+/* TextField cuando está focused */
+.date-picker.aed-date-picker .text-field:focused {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* TextField cuando está disabled */
+.date-picker.aed-date-picker:disabled .text-field {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #999999;
+}
+
+/* Arrow Button (botón del calendario) */
+.date-picker.aed-date-picker .arrow-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 4 0 0;
+}
+
+.date-picker.aed-date-picker .arrow-button:hover {
+    -fx-background-color: #F5F5F5;
+}
+
+.date-picker.aed-date-picker .arrow-button:pressed {
+    -fx-background-color: #E0E0E0;
+}
+
+/* Icono del calendario */
+.date-picker.aed-date-picker .arrow-button .arrow {
+    -fx-background-color: #333333;
+    -fx-padding: 4 4 4 4;
+}
+
+.date-picker.aed-date-picker:hover .arrow-button .arrow {
+    -fx-background-color: #0078D4;
+}
+
+.date-picker.aed-date-picker:focused .arrow-button .arrow {
+    -fx-background-color: #0078D4;
+}
+
+/* ============================================
+   Popup del DatePicker (calendario)
+   ============================================ */
+.date-picker-popup {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A0A0A0;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 4, 0, 0, 2);
+}
+
+/* Mes y año en el header del calendario */
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #F8F8F8;
+    -fx-border-color: #D0D0D0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.date-picker-popup .month-year-pane .label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 12px;
+    -fx-font-family: "Arial";
+}
+
+/* Botones de navegación del calendario */
+.date-picker-popup .spinner {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .spinner .left-arrow,
+.date-picker-popup .spinner .right-arrow {
+    -fx-background-color: #333333;
+}
+
+.date-picker-popup .spinner .left-arrow:hover,
+.date-picker-popup .spinner .right-arrow:hover {
+    -fx-background-color: #0078D4;
+}
+
+/* Días de la semana (header) */
+.date-picker-popup .week-number-cell,
+.date-picker-popup .day-name-cell {
+    -fx-background-color: #E0E0E0;
+    -fx-text-fill: #333333;
+    -fx-font-size: 11px;
+    -fx-font-family: "Arial";
+    -fx-font-weight: bold;
+}
+
+/* Celdas de días */
+.date-picker-popup .day-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-font-size: 11px;
+    -fx-font-family: "Arial";
+    -fx-border-color: transparent;
+}
+
+/* Día hover */
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #E8F4FD;
+    -fx-text-fill: #000000;
+}
+
+/* Día seleccionado */
+.date-picker-popup .day-cell:selected {
+    -fx-background-color: #0078D4;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Día seleccionado con hover */
+.date-picker-popup .day-cell:selected:hover {
+    -fx-background-color: #005A9E;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Día de otro mes */
+.date-picker-popup .day-cell.other-month {
+    -fx-background-color: #F8F8F8;
+    -fx-text-fill: #999999;
+}
+
+/* Día de hoy */
+.date-picker-popup .day-cell.today {
+    -fx-border-color: #0078D4;
+    -fx-border-width: 1;
+}
+
+/* Día deshabilitado */
+.date-picker-popup .day-cell:disabled {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #CCCCCC;
+    -fx-opacity: 0.5;
+}
+

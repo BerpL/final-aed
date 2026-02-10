@@ -11,7 +11,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import componentes.BarraEstado;
-import componentes.BarraMenu;
 import componentes.BarraTitulo;
 import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
@@ -25,7 +24,6 @@ public class HabitacionesWindow {
     
     private BorderPane root;
     private BarraTitulo barraTitulo;
-    private BarraMenu barraMenu;
     private PanelNavegacion panelNavegacion;
     private BarraEstado barraEstado;
     private CampoFormulario campoNumero;
@@ -49,8 +47,6 @@ public class HabitacionesWindow {
         barraTitulo = new BarraTitulo("Sistema de Reserva de Hoteles - Gestión de Habitaciones");
         root.setTop(barraTitulo);
         
-        barraMenu = new BarraMenu();
-        
         BorderPane panelPrincipal = new BorderPane();
         panelPrincipal.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -61,10 +57,7 @@ public class HabitacionesWindow {
         VBox panelContenido = crearPanelContenido();
         panelPrincipal.setCenter(panelContenido);
         
-        VBox contenedorPrincipal = new VBox();
-        contenedorPrincipal.getChildren().addAll(barraMenu, panelPrincipal);
-        VBox.setVgrow(panelPrincipal, javafx.scene.layout.Priority.ALWAYS);
-        root.setCenter(contenedorPrincipal);
+        root.setCenter(panelPrincipal);
         
         barraEstado = new BarraEstado();
         barraEstado.setEstado("8 habitaciones registradas");
@@ -129,6 +122,7 @@ public class HabitacionesWindow {
         cmbCapacidad.setPrefHeight(24);
         cmbCapacidad.setMinHeight(24);
         cmbCapacidad.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbCapacidad, "Seleccionar");
         panelCapacidad.getChildren().addAll(lblCapacidad, cmbCapacidad);
         
         HBox panelEstado = new HBox(12);
@@ -142,6 +136,7 @@ public class HabitacionesWindow {
         cmbEstado.setPrefHeight(24);
         cmbEstado.setMinHeight(24);
         cmbEstado.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbEstado, "Seleccionar estado");
         panelEstado.getChildren().addAll(lblEstado, cmbEstado);
         
         fila2.getChildren().addAll(campoPrecio, panelCapacidad, panelEstado);
@@ -207,6 +202,13 @@ public class HabitacionesWindow {
         chkAC.setFont(Constantes.FUENTE_PEQUENA);
         chkMinibar.setFont(Constantes.FUENTE_PEQUENA);
         chkJacuzzi.setFont(Constantes.FUENTE_PEQUENA);
+        
+        // Aplicar estilo personalizado a todos los checkboxes
+        utilidades.EstiloCheckBox.aplicarEstilo(chkWifi);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkTV);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkAC);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkMinibar);
+        utilidades.EstiloCheckBox.aplicarEstilo(chkJacuzzi);
         panelCheckboxes.getChildren().addAll(chkWifi, chkTV, chkAC, chkMinibar, chkJacuzzi);
         panelAmenidades.getChildren().addAll(lblAmenidades, panelCheckboxes);
         
@@ -248,6 +250,57 @@ public class HabitacionesWindow {
         String[] columnas = {"Número", "Tipo", "Piso", "Precio/Noche", "Capacidad", "Estado", "Acciones"};
         tablaHabitaciones = new TablaDatos(columnas);
         VBox.setVgrow(tablaHabitaciones, javafx.scene.layout.Priority.ALWAYS);
+        
+        // Configurar callbacks para los botones de acción
+        tablaHabitaciones.setOnVer(fila -> {
+            String numero = tablaHabitaciones.getValor(fila, 0);
+            String tipo = tablaHabitaciones.getValor(fila, 1);
+            String piso = tablaHabitaciones.getValor(fila, 2);
+            String precio = tablaHabitaciones.getValor(fila, 3);
+            String capacidad = tablaHabitaciones.getValor(fila, 4);
+            String estado = tablaHabitaciones.getValor(fila, 5);
+            
+            ventanas.dialogos.DialogoDetalleHabitacion dialogo = 
+                new ventanas.dialogos.DialogoDetalleHabitacion(numero, tipo, piso, capacidad, 
+                    precio, estado, "WiFi, TV, Minibar, Jacuzzi");
+            dialogo.mostrar();
+        });
+        
+        tablaHabitaciones.setOnEditar(fila -> {
+            String numero = tablaHabitaciones.getValor(fila, 0);
+            String tipo = tablaHabitaciones.getValor(fila, 1);
+            String piso = tablaHabitaciones.getValor(fila, 2);
+            String precio = tablaHabitaciones.getValor(fila, 3);
+            String capacidad = tablaHabitaciones.getValor(fila, 4);
+            String estado = tablaHabitaciones.getValor(fila, 5);
+            
+            ventanas.dialogos.DialogoEditarHabitacion dialogo = 
+                new ventanas.dialogos.DialogoEditarHabitacion(numero, tipo, piso, capacidad, 
+                    precio, estado, "WiFi, TV, Minibar, Jacuzzi");
+            dialogo.mostrar();
+        });
+        
+        tablaHabitaciones.setOnEliminar(fila -> {
+            String numero = tablaHabitaciones.getValor(fila, 0);
+            String tipo = tablaHabitaciones.getValor(fila, 1);
+            ventanas.dialogos.DialogoConfirmacion dialogo = 
+                new ventanas.dialogos.DialogoConfirmacion(
+                    "Confirmar Eliminación",
+                    "¿Está seguro que desea eliminar la habitación?",
+                    "Habitación " + numero + " - " + tipo,
+                    "trash-2",
+                    true // esEliminacion
+                );
+            dialogo.mostrar();
+            if (dialogo.isConfirmado()) {
+                tablaHabitaciones.eliminarFila(fila);
+                ventanas.dialogos.DialogoMensaje dialogoExito = 
+                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                        "La habitación ha sido eliminada correctamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                dialogoExito.mostrar();
+            }
+        });
         
         tablaHabitaciones.agregarFila(new String[]{"101", "Suite Presidencial", "1", "S/. 500.00", "4", "Disponible", ""});
         tablaHabitaciones.agregarFila(new String[]{"102", "Suite", "1", "S/. 350.00", "3", "Ocupada", ""});

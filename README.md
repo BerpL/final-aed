@@ -16,11 +16,12 @@ Esto es importante porque el nombre del módulo Java debe coincidir con el nombr
 
 ## ¿Qué necesito para ejecutar este proyecto?
 
-Necesitas instalar 3 cosas antes de poder ejecutar el proyecto:
+Necesitas instalar 4 cosas antes de poder ejecutar el proyecto:
 
 1. **Java Development Kit (JDK) 24** - El lenguaje de programación
 2. **JavaFX SDK 25** - La librería para crear la interfaz gráfica
 3. **Ikonli** - Librería para los iconos
+4. **Apache PDFBox** - Librería para generar reportes en formato PDF
 
 ## Paso 1: Instalar Java (JDK 24)
 
@@ -83,12 +84,35 @@ Ikonli es la librería que proporciona los iconos que ves en la aplicación (com
 
    **Consejo:** Haz clic derecho en cada enlace y selecciona "Guardar enlace como..." o "Save link as..."
 
-3. Verifica que tengas 3 archivos dentro de la carpeta `lib`:
+3. Verifica que tengas estos 3 archivos dentro de la carpeta `lib`:
    - ikonli-core-12.3.1.jar
    - ikonli-javafx-12.3.1.jar
    - ikonli-fontawesome5-pack-12.3.1.jar
 
-## Paso 4: Abrir el proyecto en Eclipse
+## Paso 4: Instalar Apache PDFBox (Generación de PDFs)
+
+### ¿Qué es esto?
+Apache PDFBox es la librería que permite generar archivos PDF reales desde la aplicación. Se usa en la funcionalidad de "Generación de Reportes" para descargar reportes en formato PDF.
+
+### ¿Cómo lo instalo?
+
+1. Asegúrate de tener la carpeta `lib` dentro de la carpeta del proyecto (la creaste en el Paso 3)
+
+2. Descarga estos 3 archivos y guárdalos en la carpeta `lib`:
+   - [pdfbox-2.0.35.jar](https://dlcdn.apache.org/pdfbox/2.0.35/pdfbox-2.0.35.jar) - Librería principal
+   - [fontbox-2.0.35.jar](https://dlcdn.apache.org/pdfbox/2.0.35/fontbox-2.0.35.jar) - Soporte para fuentes
+   - [commons-logging-1.2.jar](https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar) - Dependencia requerida
+
+   **Consejo:** Haz clic derecho en cada enlace y selecciona "Guardar enlace como..." o "Save link as..."
+
+3. Verifica que tengas estos 3 archivos adicionales dentro de la carpeta `lib`:
+   - pdfbox-2.0.35.jar
+   - fontbox-2.0.35.jar
+   - commons-logging-1.2.jar
+
+**Nota:** Solo necesitas descargar estos archivos y ponerlos en la carpeta `lib`. Eclipse los detectará automáticamente cuando abras el proyecto.
+
+## Paso 5: Abrir el proyecto en Eclipse
 
 ### ¿Qué es Eclipse?
 Eclipse es un programa (IDE) que te permite escribir y ejecutar código Java de forma fácil.
@@ -126,7 +150,7 @@ Eclipse es un programa (IDE) que te permite escribir y ejecutar código Java de 
    - Haz clic en `Clean`
    - Espera a que termine (verás mensajes en la parte inferior de Eclipse)
 
-## Paso 5: Ejecutar el proyecto
+## Paso 6: Ejecutar el proyecto
 
 Una vez que el proyecto esté abierto en Eclipse:
 
@@ -147,10 +171,13 @@ Tu proyecto debe verse así:
 Reserva_de_hoteles/
 ├── src/                    (código fuente)
 ├── javafx-sdk/             (JavaFX - lo descargaste en el Paso 2)
-├── lib/                    (Ikonli - lo descargaste en el Paso 3)
+├── lib/                    (Ikonli y PDFBox - lo descargaste en los Pasos 3 y 4)
 │   ├── ikonli-core-12.3.1.jar
 │   ├── ikonli-javafx-12.3.1.jar
-│   └── ikonli-fontawesome5-pack-12.3.1.jar
+│   ├── ikonli-fontawesome5-pack-12.3.1.jar
+│   ├── pdfbox-2.0.35.jar
+│   ├── fontbox-2.0.35.jar
+│   └── commons-logging-1.2.jar
 └── README.md               (este archivo)
 ```
 
@@ -170,7 +197,18 @@ Reserva_de_hoteles/
 
 **Solución:**
 - Verifica que la carpeta `lib` exista dentro del proyecto
-- Asegúrate de tener los 3 archivos `.jar` mencionados en el Paso 3
+- Asegúrate de tener los 3 archivos `.jar` de Ikonli mencionados en el Paso 3
+
+### No puedo descargar reportes en PDF
+
+**Problema:** Faltan los archivos de Apache PDFBox.
+
+**Solución:**
+- Verifica que la carpeta `lib` exista dentro del proyecto
+- Asegúrate de tener los 3 archivos `.jar` de PDFBox mencionados en el Paso 4:
+  - pdfbox-2.0.35.jar
+  - fontbox-2.0.35.jar
+  - commons-logging-1.2.jar
 
 ### Eclipse dice que no encuentra Java 24
 

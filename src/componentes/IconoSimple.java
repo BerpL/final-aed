@@ -51,6 +51,26 @@ public class IconoSimple extends StackPane {
                 return new FontIcon(FontAwesomeSolid.CIRCLE);
             case "file-text":
                 return new FontIcon(FontAwesomeSolid.FILE);
+            case "circle-check":
+                return new FontIcon(FontAwesomeSolid.CHECK_CIRCLE);
+            case "circle-x":
+                return new FontIcon(FontAwesomeSolid.TIMES_CIRCLE);
+            case "info":
+                return new FontIcon(FontAwesomeSolid.INFO_CIRCLE);
+            case "alert-triangle":
+                return new FontIcon(FontAwesomeSolid.EXCLAMATION_TRIANGLE);
+            case "trash-2":
+                return new FontIcon(FontAwesomeSolid.TRASH);
+            case "x-circle":
+                return new FontIcon(FontAwesomeSolid.TIMES_CIRCLE);
+            case "download":
+                return new FontIcon(FontAwesomeSolid.DOWNLOAD);
+            case "x":
+                return new FontIcon(FontAwesomeSolid.TIMES);
+            case "user":
+            case "avatar":
+            case "profile":
+                return new FontIcon(FontAwesomeSolid.USER_CIRCLE);
             default:
                 return new FontIcon(FontAwesomeSolid.QUESTION);
         }
@@ -118,5 +138,41 @@ public class IconoSimple extends StackPane {
     
     public static IconoSimple crearIconoPrinter(int tamano, Color color) {
         return new IconoSimple("printer", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoCircleCheck(int tamano, Color color) {
+        return new IconoSimple("circle-check", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoCircleX(int tamano, Color color) {
+        return new IconoSimple("circle-x", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoInfo(int tamano, Color color) {
+        return new IconoSimple("info", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoAlertTriangle(int tamano, Color color) {
+        return new IconoSimple("alert-triangle", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoTrash2(int tamano, Color color) {
+        return new IconoSimple("trash-2", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoXCircle(int tamano, Color color) {
+        return new IconoSimple("x-circle", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoDownload(int tamano, Color color) {
+        return new IconoSimple("download", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoX(int tamano, Color color) {
+        return new IconoSimple("x", tamano, color);
+    }
+    
+    public static IconoSimple crearIconoUsuario(int tamano, Color color) {
+        return new IconoSimple("user", tamano, color);
     }
 }
