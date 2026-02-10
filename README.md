@@ -130,34 +130,14 @@ Eclipse es un programa (IDE) que te permite escribir y ejecutar código Java de 
 
 Una vez que el proyecto esté abierto en Eclipse:
 
-1. **Verifica la configuración de ejecución:**
-   - Haz clic derecho en el proyecto
-   - Selecciona `Run As` → `Run Configurations...`
-   - Si ya existe una configuración llamada "Main", selecciónala
-   - Ve a la pestaña "Arguments"
-   - En "VM arguments", verifica que todas las referencias digan `Reserva_de_hoteles` (no `Reserva_de_vuelos`)
-   - Si ves el nombre antiguo, elimina esa configuración (botón "Delete") y crea una nueva (ver paso siguiente)
-
-2. **Si necesitas crear una nueva configuración:**
-   - En "Run Configurations...", haz clic en "New launch configuration" (icono de hoja con +)
-   - Nombre: `Main`
-   - Project: `Reserva_de_hoteles` (asegúrate de que sea este nombre)
-   - Main class: `main.Main`
-   - Ve a la pestaña "Arguments"
-   - En "VM arguments", pega exactamente esto:
-     ```
-     --module-path "${workspace_loc:Reserva_de_hoteles/javafx-sdk/lib}" --add-modules javafx.controls,javafx.fxml --enable-native-access=javafx.graphics -Djava.library.path="${workspace_loc:Reserva_de_hoteles/javafx-sdk/lib}" -XstartOnFirstThread
-     ```
-   - **Nota para Windows:** Elimina `-XstartOnFirstThread` del final
-   - **Nota para Linux:** Elimina `-XstartOnFirstThread` del final
-   - Haz clic en `Apply` y luego en `Run`
-
-3. **O ejecuta directamente:**
+1. **Ejecuta el proyecto directamente:**
    - En la parte izquierda (Package Explorer), busca la carpeta `src` → `main`
    - Haz clic derecho en el archivo `Main.java`
    - Selecciona `Run As` → `Java Application`
 
 ¡Listo! Debería abrirse la ventana de la aplicación.
+
+**Nota:** Eclipse configurará automáticamente los argumentos de VM necesarios para JavaFX. No necesitas configurar nada manualmente en "VM arguments".
 
 ## Estructura de carpetas esperada
 
@@ -224,22 +204,13 @@ Reserva_de_hoteles/
    - Haz clic en `Clean`
    - Espera a que termine de recompilar
 
-3. **Verifica la configuración de ejecución:**
+3. **Si el problema persiste, verifica la configuración del proyecto:**
    - Haz clic derecho en el proyecto
-   - Selecciona `Run As` → `Run Configurations...`
-   - Si hay una configuración llamada "Main", selecciónala
-   - Ve a la pestaña "Arguments"
-   - En "VM arguments", verifica que diga `Reserva_de_hoteles` (no `Reserva_de_vuelos`)
-   - Si dice el nombre antiguo, elimina esa configuración y crea una nueva:
-     - Haz clic en "New launch configuration"
-     - Nombre: `Main`
-     - Project: `Reserva_de_hoteles`
-     - Main class: `main.Main`
-     - En VM arguments, pega esto:
-       ```
-       --module-path "${workspace_loc:Reserva_de_hoteles/javafx-sdk/lib}" --add-modules javafx.controls,javafx.fxml --enable-native-access=javafx.graphics -Djava.library.path="${workspace_loc:Reserva_de_hoteles/javafx-sdk/lib}" -XstartOnFirstThread
-       ```
-     - Haz clic en `Apply` y luego en `Run`
+   - Selecciona `Properties`
+   - Ve a `Java Build Path` → `Libraries`
+   - Verifica que aparezcan las librerías de JavaFX e Ikonli
+   - Si faltan, haz clic en `Add JARs...` y busca los archivos `.jar` en las carpetas `javafx-sdk/lib` y `lib`
+   - Haz clic en `Apply and Close`
 
 4. **Si el problema persiste:**
    - Cierra Eclipse completamente
