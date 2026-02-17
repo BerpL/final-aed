@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 /**
  * Clase para gestionar la lista de reservas con operaciones CRUD
+ * Usa ARRAYLIST para almacenamiento principal
  */
 public class GestionReservas {
 	
