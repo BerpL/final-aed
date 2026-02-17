@@ -17,6 +17,12 @@ import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
 import componentes.TablaDatos;
 import utilidades.Constantes;
+import clases.GestionReservas;
+import clases.GestionHuespedes;
+import clases.GestionHabitaciones;
+import clases.Reserva;
+import clases.Huesped;
+import clases.Habitacion;
 
 /**
  * Ventana para el registro de reservas
@@ -38,8 +44,17 @@ public class ReservasWindow {
     private CheckBox chkParking;
     private CheckBox chkSpa;
     private TablaDatos tablaReservas;
+    private GestionReservas gestionReservas;
+    private GestionHuespedes gestionHuespedes;
+    private GestionHabitaciones gestionHabitaciones;
     
     public ReservasWindow() {
+        // Obtener instancias compartidas de las gestiones
+        utilidades.GestorDatos gestorDatos = utilidades.GestorDatos.getInstancia();
+        gestionReservas = gestorDatos.getGestionReservas();
+        gestionHuespedes = gestorDatos.getGestionHuespedes();
+        gestionHabitaciones = gestorDatos.getGestionHabitaciones();
+        
         root = new BorderPane();
         root.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -59,8 +74,13 @@ public class ReservasWindow {
         root.setCenter(panelPrincipal);
         
         barraEstado = new BarraEstado();
-        barraEstado.setEstado("5 reservas registradas");
+        actualizarBarraEstado();
         root.setBottom(barraEstado);
+    }
+    
+    private void actualizarBarraEstado() {
+        int cantidad = gestionReservas.obtenerCantidad();
+        barraEstado.setEstado(cantidad + " reserva" + (cantidad != 1 ? "s" : "") + " registrada" + (cantidad != 1 ? "s" : ""));
     }
     
     private VBox crearPanelContenido() {
@@ -108,7 +128,8 @@ public class ReservasWindow {
         lblHuesped.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblHuesped.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbHuesped = new ComboBox<>();
-        cmbHuesped.getItems().addAll("Juan Pérez", "María García");
+        // Cargar huéspedes desde la gestión
+        actualizarComboHuespedes();
         cmbHuesped.setPrefWidth(250);
         cmbHuesped.setPrefHeight(24);
         cmbHuesped.setMinHeight(24);
@@ -122,7 +143,8 @@ public class ReservasWindow {
         lblHabitacion.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblHabitacion.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbHabitacion = new ComboBox<>();
-        cmbHabitacion.getItems().addAll("101 - Suite", "102 - Suite", "201 - Doble");
+        // Cargar habitaciones disponibles desde la gestión
+        actualizarComboHabitaciones();
         cmbHabitacion.setPrefWidth(250);
         cmbHabitacion.setPrefHeight(24);
         cmbHabitacion.setMinHeight(24);
@@ -167,7 +189,7 @@ public class ReservasWindow {
         datePickerCheckOut.setPromptText("dd/MM/yyyy");
         
         // Validar que Check-Out no sea anterior a Check-In
-        datePickerCheckIn.valueProperty().addListener((_, oldDate, newDate) -> {
+        datePickerCheckIn.valueProperty().addListener((_, _, newDate) -> {
             if (newDate != null && datePickerCheckOut.getValue() != null) {
                 if (datePickerCheckOut.getValue().isBefore(newDate)) {
                     datePickerCheckOut.setValue(newDate);
@@ -175,7 +197,7 @@ public class ReservasWindow {
             }
         });
         
-        datePickerCheckOut.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+        datePickerCheckOut.setDayCellFactory(_ -> new javafx.scene.control.DateCell() {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
@@ -214,7 +236,7 @@ public class ReservasWindow {
         Label lblTotal = new Label("Total:");
         lblTotal.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblTotal.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
-        lblTotalValor = new Label("S/. 750.00");
+        lblTotalValor = new Label("S/. 0.00");
         lblTotalValor.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblTotalValor.setTextFill(Constantes.COLOR_PRIMARIO); // Color azul (#0078D4)
         panelTotal.getChildren().addAll(lblTotal, lblTotalValor);
@@ -232,6 +254,10 @@ public class ReservasWindow {
         utilidades.EstiloCheckBox.aplicarEstilo(chkDesayuno);
         utilidades.EstiloCheckBox.aplicarEstilo(chkParking);
         utilidades.EstiloCheckBox.aplicarEstilo(chkSpa);
+        
+        // Agregar listeners para actualizar el total dinámicamente
+        configurarListenersTotal();
+        
         fila4.getChildren().addAll(lblServicios, chkDesayuno, chkParking, chkSpa);
         
         HBox panelAdvertencia = new HBox(8);
@@ -256,39 +282,118 @@ public class ReservasWindow {
             // Validar campos
             if (cmbHuesped.getSelectionModel().getSelectedIndex() < 0 || 
                 cmbHabitacion.getSelectionModel().getSelectedIndex() < 0 ||
-                datePickerCheckIn.getValue() == null || datePickerCheckOut.getValue() == null) {
+                datePickerCheckIn.getValue() == null || datePickerCheckOut.getValue() == null ||
+                campoNumHuespedes.getValor().isEmpty() || cmbTipoPago.getValue() == null) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Por favor complete todos los campos obligatorios.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            
+            // Obtener datos seleccionados
+            String nombreHuesped = cmbHuesped.getValue();
+            String numeroHabitacion = cmbHabitacion.getValue().split(" - ")[0]; // Extraer número de "101 - Suite"
+            LocalDate checkIn = datePickerCheckIn.getValue();
+            LocalDate checkOut = datePickerCheckOut.getValue();
+            
+            // Verificar disponibilidad
+            if (!gestionReservas.estaDisponible(numeroHabitacion, checkIn, checkOut)) {
                 ventanas.dialogos.DialogoMensaje dialogoError = 
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
                         "La habitación seleccionada no está disponible para las fechas indicadas. Por favor seleccione otras fechas u otra habitación.",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
-            } else {
-                // Agregar a la tabla
-                String codigo = "RES" + String.format("%03d", tablaReservas.getTabla().getItems().size() + 1);
-                String checkInStr = datePickerCheckIn.getValue() != null ? 
-                    datePickerCheckIn.getValue().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
-                String checkOutStr = datePickerCheckOut.getValue() != null ? 
-                    datePickerCheckOut.getValue().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+                return;
+            }
+            
+            try {
+                // Buscar huésped por nombre
+                Huesped huesped = null;
+                java.util.ArrayList<Huesped> huespedes = gestionHuespedes.obtenerTodos();
+                for (Huesped h : huespedes) {
+                    if (h.obtenerNombreCompleto().equals(nombreHuesped)) {
+                        huesped = h;
+                        break;
+                    }
+                }
                 
-                tablaReservas.agregarFila(new String[]{
-                    codigo,
-                    cmbHuesped.getValue(),
-                    cmbHabitacion.getValue(),
-                    checkInStr,
-                    checkOutStr,
-                    "Activo",
-                    ""
-                });
+                if (huesped == null) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error",
+                            "No se encontró el huésped seleccionado.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
                 
-                // Mostrar diálogo de éxito
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "La reserva ha sido registrada exitosamente. Se ha enviado confirmación al huésped.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+                // Obtener habitación
+                Habitacion habitacion = gestionHabitaciones.buscarPorNumero(numeroHabitacion);
+                if (habitacion == null) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error",
+                            "No se encontró la habitación seleccionada.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
                 
-                // Limpiar formulario
-                limpiarFormulario();
+                // Calcular total
+                int numeroNoches = (int) java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
+                int numeroHuespedes = Integer.parseInt(campoNumHuespedes.getValor());
+                double total = habitacion.getPrecioNoche() * numeroNoches;
+                if (chkDesayuno.isSelected()) total += 10.00 * numeroNoches * numeroHuespedes;
+                if (chkParking.isSelected()) total += 5.00 * numeroNoches;
+                if (chkSpa.isSelected()) total += 20.00 * numeroNoches;
+                
+                // Crear nueva reserva
+                Reserva nuevaReserva = new Reserva();
+                nuevaReserva.setIdHuesped(huesped.getId());
+                nuevaReserva.setNombreHuesped(huesped.obtenerNombreCompleto());
+                nuevaReserva.setNumeroHabitacion(numeroHabitacion);
+                nuevaReserva.setCheckIn(checkIn);
+                nuevaReserva.setCheckOut(checkOut);
+                nuevaReserva.setNumeroNoches(numeroNoches);
+                nuevaReserva.setNumeroHuespedes(numeroHuespedes);
+                nuevaReserva.setFormaPago(cmbTipoPago.getValue());
+                nuevaReserva.setTotal(total);
+                nuevaReserva.setEstado("Pendiente");
+                nuevaReserva.setDesayuno(chkDesayuno.isSelected());
+                nuevaReserva.setParking(chkParking.isSelected());
+                nuevaReserva.setSpa(chkSpa.isSelected());
+                nuevaReserva.setObservaciones("");
+                
+                // Agregar a la gestión
+                if (gestionReservas.agregar(nuevaReserva)) {
+                    // Actualizar tabla
+                    cargarDatosEnTabla();
+                    
+                    // Actualizar barra de estado
+                    actualizarBarraEstado();
+                    
+                    // Mostrar diálogo de éxito
+                    ventanas.dialogos.DialogoMensaje dialogoExito = 
+                        new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                            "La reserva ha sido registrada exitosamente. Se ha enviado confirmación al huésped.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                    dialogoExito.mostrar();
+                    
+                    // Limpiar formulario
+                    limpiarFormulario();
+                } else {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error",
+                            "No se pudo registrar la reserva. Intente nuevamente.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                }
+            } catch (NumberFormatException e) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "El número de huéspedes debe ser un número válido.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
             }
         });
         
@@ -322,63 +427,81 @@ public class ReservasWindow {
         VBox.setVgrow(tablaReservas, javafx.scene.layout.Priority.ALWAYS);
         
         // Configurar callbacks para los botones de acción
-        tablaReservas.setOnVer(fila -> {
-            String codigo = tablaReservas.getValor(fila, 0);
-            String huesped = tablaReservas.getValor(fila, 1);
-            String habitacion = tablaReservas.getValor(fila, 2);
-            String checkIn = tablaReservas.getValor(fila, 3);
-            String checkOut = tablaReservas.getValor(fila, 4);
-            String estado = tablaReservas.getValor(fila, 5);
-            
-            // Calcular noches (simplificado, en producción se calcularía de las fechas)
-            String noches = "3";
-            String nroHuespedes = "2";
-            String total = "S/. 2,550.00";
-            String observaciones = "Cliente VIP, preparar champagne de cortesía.";
-            
-            ventanas.dialogos.DialogoDetalleReserva dialogo = 
-                new ventanas.dialogos.DialogoDetalleReserva(codigo, huesped, habitacion,
-                    checkIn, checkOut, noches, nroHuespedes, total, estado, observaciones);
-            dialogo.mostrar();
-        });
-        
-        tablaReservas.setOnEditar(fila -> {
-            String huesped = tablaReservas.getValor(fila, 1);
-            String habitacion = tablaReservas.getValor(fila, 2);
-            String checkIn = tablaReservas.getValor(fila, 3);
-            String checkOut = tablaReservas.getValor(fila, 4);
-            String estado = tablaReservas.getValor(fila, 5);
-            
-            ventanas.dialogos.DialogoEditarReserva dialogo = 
-                new ventanas.dialogos.DialogoEditarReserva(huesped, habitacion, checkIn, 
-                    checkOut, "2", estado, "Cliente VIP, preparar champagne de cortesía.");
-            dialogo.mostrar();
-        });
-        
-        tablaReservas.setOnEliminar(fila -> {
-            String codigo = tablaReservas.getValor(fila, 0);
-            String huesped = tablaReservas.getValor(fila, 1);
-            ventanas.dialogos.DialogoConfirmacion dialogo = 
-                new ventanas.dialogos.DialogoConfirmacion(
-                    "Cancelar Reserva",
-                    "¿Está seguro que desea cancelar esta reserva? Esta acción cancelará la reserva y liberará la habitación.",
-                    "Reserva: " + codigo + " - " + huesped,
-                    "info",
-                    false // esEliminacion (título azul)
-                );
-            dialogo.mostrar();
-            if (dialogo.isConfirmado()) {
-                tablaReservas.eliminarFila(fila);
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "La reserva ha sido cancelada correctamente. Se enviará notificación al huésped.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+        // Ahora los callbacks reciben el ID de reserva directamente, no el índice
+        tablaReservas.setOnVer(idReserva -> {
+            if (idReserva == null || idReserva.isEmpty()) {
+                return;
+            }
+            Reserva reserva = gestionReservas.buscarPorId(idReserva);
+            if (reserva != null) {
+                ventanas.dialogos.DialogoDetalleReserva dialogo = 
+                    new ventanas.dialogos.DialogoDetalleReserva(
+                        reserva.getIdReserva(),
+                        reserva.getNombreHuesped(),
+                        reserva.getNumeroHabitacion(),
+                        reserva.obtenerCheckInFormateado(),
+                        reserva.obtenerCheckOutFormateado(),
+                        String.valueOf(reserva.getNumeroNoches()),
+                        String.valueOf(reserva.getNumeroHuespedes()),
+                        reserva.obtenerTotalFormateado(),
+                        reserva.getEstado(),
+                        reserva.getObservaciones());
+                dialogo.mostrar();
             }
         });
         
-        tablaReservas.agregarFila(new String[]{"RES001", "Juan Perez Lopez", "101-Suite", "15/07/2024", "17/07/2024", "Activo", ""});
-        tablaReservas.agregarFila(new String[]{"RES002", "Maria Rodriguez", "203-Doble", "20/07/2024", "22/07/2024", "Pendiente", ""});
+        tablaReservas.setOnEditar(idReserva -> {
+            if (idReserva == null || idReserva.isEmpty()) {
+                return;
+            }
+            Reserva reserva = gestionReservas.buscarPorId(idReserva);
+            if (reserva != null) {
+                ventanas.dialogos.DialogoEditarReserva dialogo = 
+                    new ventanas.dialogos.DialogoEditarReserva(
+                        reserva.getNombreHuesped(),
+                        reserva.getNumeroHabitacion(),
+                        reserva.obtenerCheckInFormateado(),
+                        reserva.obtenerCheckOutFormateado(),
+                        String.valueOf(reserva.getNumeroHuespedes()),
+                        reserva.getEstado(),
+                        reserva.getObservaciones());
+                dialogo.mostrar();
+                // Recargar tabla después de editar
+                cargarDatosEnTabla();
+            }
+        });
+        
+        tablaReservas.setOnEliminar(idReserva -> {
+            if (idReserva == null || idReserva.isEmpty()) {
+                return;
+            }
+            Reserva reserva = gestionReservas.buscarPorId(idReserva);
+            if (reserva != null) {
+                ventanas.dialogos.DialogoConfirmacion dialogo = 
+                    new ventanas.dialogos.DialogoConfirmacion(
+                        "Cancelar Reserva",
+                        "¿Está seguro que desea cancelar esta reserva? Esta acción cancelará la reserva y liberará la habitación.",
+                        "Reserva: " + reserva.getIdReserva() + " - " + reserva.getNombreHuesped(),
+                        "info",
+                        false // esEliminacion (título azul)
+                    );
+                dialogo.mostrar();
+                if (dialogo.isConfirmado()) {
+                    if (gestionReservas.eliminar(idReserva)) {
+                        cargarDatosEnTabla();
+                        actualizarBarraEstado();
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "La reserva ha sido cancelada correctamente. Se enviará notificación al huésped.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                    }
+                }
+            }
+        });
+        
+        // Cargar datos iniciales
+        cargarDatosEnTabla();
         
         panel.getChildren().addAll(lblTituloTabla, tablaReservas);
         
@@ -404,5 +527,129 @@ public class ReservasWindow {
         chkDesayuno.setSelected(false);
         chkParking.setSelected(false);
         chkSpa.setSelected(false);
+    }
+    
+    private void actualizarComboHabitaciones() {
+        cmbHabitacion.getItems().clear();
+        java.util.ArrayList<Habitacion> habitaciones = gestionHabitaciones.obtenerDisponibles();
+        for (Habitacion h : habitaciones) {
+            cmbHabitacion.getItems().add(h.getNumero() + " - " + h.getTipo());
+        }
+    }
+    
+    public void actualizarComboHuespedes() {
+        if (cmbHuesped != null) {
+            cmbHuesped.getItems().clear();
+            String[] nombresHuespedes = gestionHuespedes.obtenerNombresCompletos();
+            cmbHuesped.getItems().addAll(nombresHuespedes);
+        }
+    }
+    
+    /**
+     * Configura listeners para actualizar el total dinámicamente
+     */
+    private void configurarListenersTotal() {
+        // Listener para cambio de habitación
+        cmbHabitacion.valueProperty().addListener((_, _, _) -> actualizarTotal());
+        
+        // Listener para cambio de fechas
+        datePickerCheckIn.valueProperty().addListener((_, _, _) -> actualizarTotal());
+        datePickerCheckOut.valueProperty().addListener((_, _, _) -> actualizarTotal());
+        
+        // Listener para cambio de número de huéspedes
+        campoNumHuespedes.getCampo().textProperty().addListener((_, _, _) -> actualizarTotal());
+        
+        // Listeners para servicios adicionales
+        chkDesayuno.selectedProperty().addListener((_, _, _) -> actualizarTotal());
+        chkParking.selectedProperty().addListener((_, _, _) -> actualizarTotal());
+        chkSpa.selectedProperty().addListener((_, _, _) -> actualizarTotal());
+    }
+    
+    /**
+     * Calcula y actualiza el total dinámicamente
+     */
+    private void actualizarTotal() {
+        double total = 0.0;
+        
+        // Verificar que haya habitación seleccionada
+        if (cmbHabitacion.getValue() == null || cmbHabitacion.getValue().isEmpty()) {
+            lblTotalValor.setText("S/. 0.00");
+            return;
+        }
+        
+        // Obtener habitación seleccionada
+        String numeroHabitacion = cmbHabitacion.getValue().split(" - ")[0];
+        Habitacion habitacion = gestionHabitaciones.buscarPorNumero(numeroHabitacion);
+        
+        if (habitacion == null) {
+            lblTotalValor.setText("S/. 0.00");
+            return;
+        }
+        
+        // Calcular número de noches
+        LocalDate checkIn = datePickerCheckIn.getValue();
+        LocalDate checkOut = datePickerCheckOut.getValue();
+        
+        if (checkIn == null || checkOut == null || checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
+            lblTotalValor.setText("S/. 0.00");
+            return;
+        }
+        
+        int numeroNoches = (int) java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
+        if (numeroNoches <= 0) {
+            lblTotalValor.setText("S/. 0.00");
+            return;
+        }
+        
+        // Calcular precio base (habitación * noches)
+        total = habitacion.getPrecioNoche() * numeroNoches;
+        
+        // Obtener número de huéspedes
+        int numeroHuespedes = 1; // Por defecto
+        try {
+            String numHuespedesStr = campoNumHuespedes.getValor().trim();
+            if (!numHuespedesStr.isEmpty()) {
+                numeroHuespedes = Integer.parseInt(numHuespedesStr);
+                if (numeroHuespedes <= 0) {
+                    numeroHuespedes = 1;
+                }
+            }
+        } catch (NumberFormatException e) {
+            // Si no es un número válido, usar 1
+            numeroHuespedes = 1;
+        }
+        
+        // Agregar servicios adicionales
+        if (chkDesayuno.isSelected()) {
+            total += 10.00 * numeroNoches * numeroHuespedes;
+        }
+        if (chkParking.isSelected()) {
+            total += 5.00 * numeroNoches;
+        }
+        if (chkSpa.isSelected()) {
+            total += 20.00 * numeroNoches;
+        }
+        
+        // Actualizar label con formato
+        lblTotalValor.setText(String.format("S/. %.2f", total));
+    }
+    
+    private void cargarDatosEnTabla() {
+        // Limpiar tabla
+        tablaReservas.limpiar();
+        
+        // Cargar datos desde la gestión
+        java.util.ArrayList<Reserva> reservas = gestionReservas.obtenerTodas();
+        for (Reserva r : reservas) {
+            tablaReservas.agregarFila(new String[]{
+                r.getIdReserva(),
+                r.getNombreHuesped(),
+                r.getNumeroHabitacion(),
+                r.obtenerCheckInFormateado(),
+                r.obtenerCheckOutFormateado(),
+                r.getEstado(),
+                ""
+            });
+        }
     }
 }

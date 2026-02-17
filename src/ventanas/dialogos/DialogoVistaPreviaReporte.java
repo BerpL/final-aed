@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import componentes.IconoSimple;
@@ -337,6 +336,7 @@ public class DialogoVistaPreviaReporte extends DialogoBase {
         }
     }
     
+    @SuppressWarnings("unused")
     private void generarReporteTexto(File archivo) throws IOException {
         // Generar archivo de texto formateado con el reporte
         try (FileWriter writer = new FileWriter(archivo, java.nio.charset.StandardCharsets.UTF_8)) {

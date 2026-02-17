@@ -15,6 +15,8 @@ import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
 import componentes.TablaDatos;
 import utilidades.Constantes;
+import clases.GestionTiposHabitacion;
+import clases.TipoHabitacion;
 
 /**
  * Ventana para la gestión de tipos de habitación
@@ -35,8 +37,14 @@ public class TiposHabitacionWindow {
     private CheckBox chkMinibar;
     private CheckBox chkJacuzzi;
     private TablaDatos tablaTipos;
+    private GestionTiposHabitacion gestionTipos;
+    private ComboBox<String> cmbCapacidad;
+    private ComboBox<String> cmbCamas;
     
     public TiposHabitacionWindow() {
+        // Inicializar gestión de tipos
+        gestionTipos = utilidades.GestorDatos.getInstancia().getGestionTiposHabitacion();
+        
         root = new BorderPane();
         root.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -56,8 +64,13 @@ public class TiposHabitacionWindow {
         root.setCenter(panelPrincipal);
         
         barraEstado = new BarraEstado();
-        barraEstado.setEstado("5 tipos registrados");
+        actualizarBarraEstado();
         root.setBottom(barraEstado);
+    }
+    
+    private void actualizarBarraEstado() {
+        int cantidad = gestionTipos.obtenerCantidad();
+        barraEstado.setEstado(cantidad + " tipo" + (cantidad != 1 ? "s" : "") + " registrado" + (cantidad != 1 ? "s" : ""));
     }
     
     private VBox crearPanelContenido() {
@@ -111,7 +124,7 @@ public class TiposHabitacionWindow {
         Label lblCapacidad = new Label("Capacidad:");
         lblCapacidad.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCapacidad.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
-        ComboBox<String> cmbCapacidad = new ComboBox<>();
+        cmbCapacidad = new ComboBox<>();
         cmbCapacidad.getItems().addAll("1", "2", "3", "4", "5", "6");
         cmbCapacidad.setPrefWidth(80);
         cmbCapacidad.setPrefHeight(24);
@@ -125,7 +138,7 @@ public class TiposHabitacionWindow {
         Label lblCamas = new Label("Tipo de Camas:");
         lblCamas.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCamas.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
-        ComboBox<String> cmbCamas = new ComboBox<>();
+        cmbCamas = new ComboBox<>();
         cmbCamas.getItems().addAll("Individual", "Doble", "Queen", "King");
         cmbCamas.setPrefWidth(150);
         cmbCamas.setPrefHeight(24);
@@ -167,6 +180,76 @@ public class TiposHabitacionWindow {
                            "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_BLANCO.toString().substring(2, 8) + 
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnAgregar.setOnAction(_ -> {
+            // Validar campos
+            if (campoCodigo.getValor().isEmpty() || campoNombre.getValor().isEmpty() || 
+                campoPrecio.getValor().isEmpty() || cmbCapacidad.getValue() == null ||
+                cmbCamas.getValue() == null || campoArea.getValor().isEmpty()) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Por favor complete todos los campos obligatorios.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+            } else {
+                // Verificar si ya existe un tipo con ese código
+                if (gestionTipos.buscarPorCodigo(campoCodigo.getValor()) != null) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "Ya existe un tipo de habitación con el código: " + campoCodigo.getValor(),
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
+                
+                try {
+                    // Crear nuevo tipo de habitación
+                    TipoHabitacion nuevoTipo = new TipoHabitacion();
+                    nuevoTipo.setCodigo(campoCodigo.getValor());
+                    nuevoTipo.setNombre(campoNombre.getValor());
+                    nuevoTipo.setPrecioBase(Double.parseDouble(campoPrecio.getValor()));
+                    nuevoTipo.setCapacidad(Integer.parseInt(cmbCapacidad.getValue()));
+                    nuevoTipo.setTipoCamas(cmbCamas.getValue());
+                    nuevoTipo.setArea(Double.parseDouble(campoArea.getValor()));
+                    nuevoTipo.setWifi(chkWifi.isSelected());
+                    nuevoTipo.setTv(chkTV.isSelected());
+                    nuevoTipo.setAc(chkAC.isSelected());
+                    nuevoTipo.setMinibar(chkMinibar.isSelected());
+                    nuevoTipo.setJacuzzi(chkJacuzzi.isSelected());
+                    nuevoTipo.setDescripcion(""); // Se puede agregar campo de descripción si es necesario
+                    
+                    // Agregar a la gestión
+                    if (gestionTipos.agregar(nuevoTipo)) {
+                        // Actualizar tabla
+                        cargarDatosEnTabla();
+                        
+                        // Mostrar diálogo de éxito
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "El tipo de habitación ha sido registrado exitosamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                        
+                        // Actualizar barra de estado
+                        actualizarBarraEstado();
+                        
+                        // Limpiar formulario
+                        limpiarFormulario();
+                    } else {
+                        ventanas.dialogos.DialogoMensaje dialogoError = 
+                            new ventanas.dialogos.DialogoMensaje("Error",
+                                "No se pudo registrar el tipo de habitación. Intente nuevamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                        dialogoError.mostrar();
+                    }
+                } catch (NumberFormatException e) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "El precio y el área deben ser números válidos.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                }
+            }
+        });
         
         Button btnLimpiar = new Button("Limpiar");
         btnLimpiar.setFont(Constantes.FUENTE_NORMAL);
@@ -174,6 +257,7 @@ public class TiposHabitacionWindow {
                           "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_PRINCIPAL.toString().substring(2, 8) + 
                           "; -fx-border-color: #" + Constantes.COLOR_BORDE_MEDIO.toString().substring(2, 8) + 
                           "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnLimpiar.setOnAction(_ -> limpiarFormulario());
         
         panelBotones.getChildren().addAll(btnAgregar, btnLimpiar);
         
@@ -197,59 +281,74 @@ public class TiposHabitacionWindow {
         VBox.setVgrow(tablaTipos, javafx.scene.layout.Priority.ALWAYS);
         
         // Configurar callbacks para los botones de acción
-        tablaTipos.setOnVer(fila -> {
-            String codigo = tablaTipos.getValor(fila, 0);
-            String nombre = tablaTipos.getValor(fila, 1);
-            String precio = tablaTipos.getValor(fila, 2);
-            
-            // Datos de ejemplo para capacidad y descripción
-            String capacidad = "4 personas";
-            String descripcion = "Suite de lujo con vista panorámica, jacuzzi privado y servicio de mayordomo.";
-            
-            ventanas.dialogos.DialogoDetalleTipoHabitacion dialogo = 
-                new ventanas.dialogos.DialogoDetalleTipoHabitacion(codigo, nombre, capacidad, precio, descripcion);
-            dialogo.mostrar();
-        });
-        
-        tablaTipos.setOnEditar(fila -> {
-            String codigo = tablaTipos.getValor(fila, 0);
-            String nombre = tablaTipos.getValor(fila, 1);
-            String precio = tablaTipos.getValor(fila, 2);
-            
-            // Datos de ejemplo para capacidad y descripción
-            String capacidad = "4";
-            String descripcion = "Suite de lujo con vista panorámica, jacuzzi privado y servicio de mayordomo.";
-            
-            ventanas.dialogos.DialogoEditarTipoHabitacion dialogo = 
-                new ventanas.dialogos.DialogoEditarTipoHabitacion(codigo, nombre, capacidad, precio, descripcion);
-            dialogo.mostrar();
-        });
-        
-        tablaTipos.setOnEliminar(fila -> {
-            String codigo = tablaTipos.getValor(fila, 0);
-            String nombre = tablaTipos.getValor(fila, 1);
-            ventanas.dialogos.DialogoConfirmacion dialogo = 
-                new ventanas.dialogos.DialogoConfirmacion(
-                    "Confirmar Eliminación",
-                    "¿Está seguro que desea eliminar este tipo de habitación?",
-                    nombre + " (" + codigo + ")",
-                    "trash-2",
-                    true // esEliminacion
-                );
-            dialogo.mostrar();
-            if (dialogo.isConfirmado()) {
-                tablaTipos.eliminarFila(fila);
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "El tipo de habitación ha sido eliminado correctamente.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+        // Ahora los callbacks reciben el código directamente, no el índice
+        tablaTipos.setOnVer(codigo -> {
+            if (codigo == null || codigo.isEmpty()) {
+                return;
+            }
+            TipoHabitacion tipo = gestionTipos.buscarPorCodigo(codigo);
+            if (tipo != null) {
+                ventanas.dialogos.DialogoDetalleTipoHabitacion dialogo = 
+                    new ventanas.dialogos.DialogoDetalleTipoHabitacion(
+                        tipo.getCodigo(),
+                        tipo.getNombre(),
+                        tipo.obtenerCapacidadTexto(),
+                        tipo.obtenerPrecioFormateado(),
+                        tipo.getDescripcion());
+                dialogo.mostrar();
             }
         });
         
-        tablaTipos.agregarFila(new String[]{"SUITE-PRES", "Suite Presidencial", "S/. 500.00", ""});
-        tablaTipos.agregarFila(new String[]{"SUITE", "Suite", "S/. 350.00", ""});
-        tablaTipos.agregarFila(new String[]{"DOBLE", "Habitación Doble", "S/. 200.00", ""});
+        tablaTipos.setOnEditar(codigo -> {
+            if (codigo == null || codigo.isEmpty()) {
+                return;
+            }
+            TipoHabitacion tipo = gestionTipos.buscarPorCodigo(codigo);
+            if (tipo != null) {
+                ventanas.dialogos.DialogoEditarTipoHabitacion dialogo = 
+                    new ventanas.dialogos.DialogoEditarTipoHabitacion(
+                        tipo.getCodigo(),
+                        tipo.getNombre(),
+                        String.valueOf(tipo.getCapacidad()),
+                        tipo.obtenerPrecioFormateado(),
+                        tipo.getDescripcion());
+                dialogo.mostrar();
+                // Recargar tabla después de editar
+                cargarDatosEnTabla();
+            }
+        });
+        
+        tablaTipos.setOnEliminar(codigo -> {
+            if (codigo == null || codigo.isEmpty()) {
+                return;
+            }
+            TipoHabitacion tipo = gestionTipos.buscarPorCodigo(codigo);
+            if (tipo != null) {
+                ventanas.dialogos.DialogoConfirmacion dialogo = 
+                    new ventanas.dialogos.DialogoConfirmacion(
+                        "Confirmar Eliminación",
+                        "¿Está seguro que desea eliminar este tipo de habitación?",
+                        tipo.getNombre() + " (" + tipo.getCodigo() + ")",
+                        "trash-2",
+                        true // esEliminacion
+                    );
+                dialogo.mostrar();
+                if (dialogo.isConfirmado()) {
+                    if (gestionTipos.eliminar(codigo)) {
+                        cargarDatosEnTabla();
+                        actualizarBarraEstado();
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "El tipo de habitación ha sido eliminado correctamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                    }
+                }
+            }
+        });
+        
+        // Cargar datos iniciales
+        cargarDatosEnTabla();
         
         panel.getChildren().addAll(lblTituloTabla, tablaTipos);
         
@@ -262,5 +361,35 @@ public class TiposHabitacionWindow {
     
     public PanelNavegacion getPanelNavegacion() {
         return panelNavegacion;
+    }
+    
+    private void limpiarFormulario() {
+        campoCodigo.setValor("");
+        campoNombre.setValor("");
+        campoPrecio.setValor("");
+        campoArea.setValor("");
+        cmbCapacidad.getSelectionModel().clearSelection();
+        cmbCamas.getSelectionModel().clearSelection();
+        chkWifi.setSelected(false);
+        chkTV.setSelected(false);
+        chkAC.setSelected(false);
+        chkMinibar.setSelected(false);
+        chkJacuzzi.setSelected(false);
+    }
+    
+    private void cargarDatosEnTabla() {
+        // Limpiar tabla
+        tablaTipos.limpiar();
+        
+        // Cargar datos desde la gestión
+        java.util.ArrayList<TipoHabitacion> tipos = gestionTipos.obtenerTodos();
+        for (TipoHabitacion t : tipos) {
+            tablaTipos.agregarFila(new String[]{
+                t.getCodigo(),
+                t.getNombre(),
+                t.obtenerPrecioFormateado(),
+                ""
+            });
+        }
     }
 }

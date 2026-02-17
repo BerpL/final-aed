@@ -16,6 +16,8 @@ import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
 import componentes.TablaDatos;
 import utilidades.Constantes;
+import clases.GestionHabitaciones;
+import clases.Habitacion;
 
 /**
  * Ventana para la gestión de habitaciones
@@ -39,8 +41,12 @@ public class HabitacionesWindow {
     private CheckBox chkMinibar;
     private CheckBox chkJacuzzi;
     private TablaDatos tablaHabitaciones;
+    private GestionHabitaciones gestionHabitaciones;
     
     public HabitacionesWindow() {
+        // Obtener instancia compartida de gestión de habitaciones
+        gestionHabitaciones = utilidades.GestorDatos.getInstancia().getGestionHabitaciones();
+        
         root = new BorderPane();
         root.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -60,8 +66,13 @@ public class HabitacionesWindow {
         root.setCenter(panelPrincipal);
         
         barraEstado = new BarraEstado();
-        barraEstado.setEstado("8 habitaciones registradas");
+        actualizarBarraEstado();
         root.setBottom(barraEstado);
+    }
+    
+    private void actualizarBarraEstado() {
+        int cantidad = gestionHabitaciones.obtenerCantidad();
+        barraEstado.setEstado(cantidad + " habitación" + (cantidad != 1 ? "es" : "") + " registrada" + (cantidad != 1 ? "s" : ""));
     }
     
     private VBox crearPanelContenido() {
@@ -222,6 +233,76 @@ public class HabitacionesWindow {
                            "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_BLANCO.toString().substring(2, 8) + 
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnAgregar.setOnAction(_ -> {
+            // Validar campos
+            if (campoNumero.getValor().isEmpty() || campoTipo.getValor().isEmpty() || 
+                campoPiso.getValor().isEmpty() || campoPrecio.getValor().isEmpty() ||
+                cmbCapacidad.getValue() == null || cmbEstado.getValue() == null) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Por favor complete todos los campos obligatorios.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+            } else {
+                // Verificar si ya existe una habitación con ese número
+                if (gestionHabitaciones.buscarPorNumero(campoNumero.getValor()) != null) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "Ya existe una habitación con el número: " + campoNumero.getValor(),
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
+                
+                try {
+                    // Crear nueva habitación
+                    Habitacion nuevaHabitacion = new Habitacion();
+                    nuevaHabitacion.setNumero(campoNumero.getValor());
+                    nuevaHabitacion.setTipo(campoTipo.getValor());
+                    nuevaHabitacion.setPiso(campoPiso.getValor());
+                    nuevaHabitacion.setPrecioNoche(Double.parseDouble(campoPrecio.getValor()));
+                    nuevaHabitacion.setCapacidad(Integer.parseInt(cmbCapacidad.getValue()));
+                    nuevaHabitacion.setEstado(cmbEstado.getValue());
+                    nuevaHabitacion.setDescripcion(txtDescripcion.getText());
+                    nuevaHabitacion.setWifi(chkWifi.isSelected());
+                    nuevaHabitacion.setTv(chkTV.isSelected());
+                    nuevaHabitacion.setAc(chkAC.isSelected());
+                    nuevaHabitacion.setMinibar(chkMinibar.isSelected());
+                    nuevaHabitacion.setJacuzzi(chkJacuzzi.isSelected());
+                    
+                    // Agregar a la gestión
+                    if (gestionHabitaciones.agregar(nuevaHabitacion)) {
+                        // Actualizar tabla
+                        cargarDatosEnTabla();
+                        
+                        // Mostrar diálogo de éxito
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "La habitación ha sido registrada exitosamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                        
+                        // Actualizar barra de estado
+                        actualizarBarraEstado();
+                        
+                        // Limpiar formulario
+                        limpiarFormulario();
+                    } else {
+                        ventanas.dialogos.DialogoMensaje dialogoError = 
+                            new ventanas.dialogos.DialogoMensaje("Error",
+                                "No se pudo registrar la habitación. Intente nuevamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                        dialogoError.mostrar();
+                    }
+                } catch (NumberFormatException e) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "El precio debe ser un número válido.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                }
+            }
+        });
         
         Button btnLimpiar = new Button("Limpiar");
         btnLimpiar.setFont(Constantes.FUENTE_NORMAL);
@@ -229,6 +310,7 @@ public class HabitacionesWindow {
                           "; -fx-text-fill: #" + Constantes.COLOR_TEXTO_PRINCIPAL.toString().substring(2, 8) + 
                           "; -fx-border-color: #" + Constantes.COLOR_BORDE_MEDIO.toString().substring(2, 8) + 
                           "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
+        btnLimpiar.setOnAction(_ -> limpiarFormulario());
         
         panelBotones.getChildren().addAll(btnAgregar, btnLimpiar);
         
@@ -252,59 +334,78 @@ public class HabitacionesWindow {
         VBox.setVgrow(tablaHabitaciones, javafx.scene.layout.Priority.ALWAYS);
         
         // Configurar callbacks para los botones de acción
-        tablaHabitaciones.setOnVer(fila -> {
-            String numero = tablaHabitaciones.getValor(fila, 0);
-            String tipo = tablaHabitaciones.getValor(fila, 1);
-            String piso = tablaHabitaciones.getValor(fila, 2);
-            String precio = tablaHabitaciones.getValor(fila, 3);
-            String capacidad = tablaHabitaciones.getValor(fila, 4);
-            String estado = tablaHabitaciones.getValor(fila, 5);
-            
-            ventanas.dialogos.DialogoDetalleHabitacion dialogo = 
-                new ventanas.dialogos.DialogoDetalleHabitacion(numero, tipo, piso, capacidad, 
-                    precio, estado, "WiFi, TV, Minibar, Jacuzzi");
-            dialogo.mostrar();
-        });
-        
-        tablaHabitaciones.setOnEditar(fila -> {
-            String numero = tablaHabitaciones.getValor(fila, 0);
-            String tipo = tablaHabitaciones.getValor(fila, 1);
-            String piso = tablaHabitaciones.getValor(fila, 2);
-            String precio = tablaHabitaciones.getValor(fila, 3);
-            String capacidad = tablaHabitaciones.getValor(fila, 4);
-            String estado = tablaHabitaciones.getValor(fila, 5);
-            
-            ventanas.dialogos.DialogoEditarHabitacion dialogo = 
-                new ventanas.dialogos.DialogoEditarHabitacion(numero, tipo, piso, capacidad, 
-                    precio, estado, "WiFi, TV, Minibar, Jacuzzi");
-            dialogo.mostrar();
-        });
-        
-        tablaHabitaciones.setOnEliminar(fila -> {
-            String numero = tablaHabitaciones.getValor(fila, 0);
-            String tipo = tablaHabitaciones.getValor(fila, 1);
-            ventanas.dialogos.DialogoConfirmacion dialogo = 
-                new ventanas.dialogos.DialogoConfirmacion(
-                    "Confirmar Eliminación",
-                    "¿Está seguro que desea eliminar la habitación?",
-                    "Habitación " + numero + " - " + tipo,
-                    "trash-2",
-                    true // esEliminacion
-                );
-            dialogo.mostrar();
-            if (dialogo.isConfirmado()) {
-                tablaHabitaciones.eliminarFila(fila);
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "La habitación ha sido eliminada correctamente.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+        // Ahora los callbacks reciben el número de habitación directamente, no el índice
+        tablaHabitaciones.setOnVer(numero -> {
+            if (numero == null || numero.isEmpty()) {
+                return;
+            }
+            Habitacion habitacion = gestionHabitaciones.buscarPorNumero(numero);
+            if (habitacion != null) {
+                ventanas.dialogos.DialogoDetalleHabitacion dialogo = 
+                    new ventanas.dialogos.DialogoDetalleHabitacion(
+                        habitacion.getNumero(),
+                        habitacion.getTipo(),
+                        habitacion.getPiso(),
+                        String.valueOf(habitacion.getCapacidad()),
+                        habitacion.obtenerPrecioFormateado(),
+                        habitacion.getEstado(),
+                        habitacion.obtenerAmenidades());
+                dialogo.mostrar();
             }
         });
         
-        tablaHabitaciones.agregarFila(new String[]{"101", "Suite Presidencial", "1", "S/. 500.00", "4", "Disponible", ""});
-        tablaHabitaciones.agregarFila(new String[]{"102", "Suite", "1", "S/. 350.00", "3", "Ocupada", ""});
-        tablaHabitaciones.agregarFila(new String[]{"201", "Doble", "2", "S/. 200.00", "2", "Disponible", ""});
+        tablaHabitaciones.setOnEditar(numero -> {
+            if (numero == null || numero.isEmpty()) {
+                return;
+            }
+            Habitacion habitacion = gestionHabitaciones.buscarPorNumero(numero);
+            if (habitacion != null) {
+                ventanas.dialogos.DialogoEditarHabitacion dialogo = 
+                    new ventanas.dialogos.DialogoEditarHabitacion(
+                        habitacion.getNumero(),
+                        habitacion.getTipo(),
+                        habitacion.getPiso(),
+                        String.valueOf(habitacion.getCapacidad()),
+                        habitacion.obtenerPrecioFormateado(),
+                        habitacion.getEstado(),
+                        habitacion.obtenerAmenidades());
+                dialogo.mostrar();
+                // Recargar tabla después de editar
+                cargarDatosEnTabla();
+            }
+        });
+        
+        tablaHabitaciones.setOnEliminar(numero -> {
+            if (numero == null || numero.isEmpty()) {
+                return;
+            }
+            Habitacion habitacion = gestionHabitaciones.buscarPorNumero(numero);
+            if (habitacion != null) {
+                ventanas.dialogos.DialogoConfirmacion dialogo = 
+                    new ventanas.dialogos.DialogoConfirmacion(
+                        "Confirmar Eliminación",
+                        "¿Está seguro que desea eliminar la habitación?",
+                        "Habitación " + habitacion.getNumero() + " - " + habitacion.getTipo(),
+                        "trash-2",
+                        true // esEliminacion
+                    );
+                dialogo.mostrar();
+                if (dialogo.isConfirmado()) {
+                    if (gestionHabitaciones.eliminar(numero)) {
+                        cargarDatosEnTabla();
+                        actualizarBarraEstado();
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "La habitación ha sido eliminada correctamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                    }
+                }
+            }
+        });
+        
+        // Cargar datos iniciales
+        cargarDatosEnTabla();
         
         panel.getChildren().addAll(lblTituloTabla, tablaHabitaciones);
         
@@ -317,5 +418,39 @@ public class HabitacionesWindow {
     
     public PanelNavegacion getPanelNavegacion() {
         return panelNavegacion;
+    }
+    
+    private void limpiarFormulario() {
+        campoNumero.setValor("");
+        campoTipo.setValor("");
+        campoPiso.setValor("");
+        campoPrecio.setValor("");
+        cmbCapacidad.getSelectionModel().clearSelection();
+        cmbEstado.getSelectionModel().clearSelection();
+        txtDescripcion.setText("");
+        chkWifi.setSelected(false);
+        chkTV.setSelected(false);
+        chkAC.setSelected(false);
+        chkMinibar.setSelected(false);
+        chkJacuzzi.setSelected(false);
+    }
+    
+    private void cargarDatosEnTabla() {
+        // Limpiar tabla
+        tablaHabitaciones.limpiar();
+        
+        // Cargar datos desde la gestión
+        java.util.ArrayList<Habitacion> habitaciones = gestionHabitaciones.obtenerTodas();
+        for (Habitacion h : habitaciones) {
+            tablaHabitaciones.agregarFila(new String[]{
+                h.getNumero(),
+                h.getTipo(),
+                h.getPiso(),
+                h.obtenerPrecioFormateado(),
+                String.valueOf(h.getCapacidad()),
+                h.getEstado(),
+                ""
+            });
+        }
     }
 }

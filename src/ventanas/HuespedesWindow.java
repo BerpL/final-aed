@@ -5,16 +5,21 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import componentes.BarraEstado;
 import componentes.BarraTitulo;
 import componentes.CampoFormulario;
 import componentes.PanelNavegacion;
 import componentes.TablaDatos;
 import utilidades.Constantes;
+import clases.GestionHuespedes;
+import clases.Huesped;
 
 /**
  * Ventana para la gestión de huéspedes
@@ -31,15 +36,19 @@ public class HuespedesWindow {
     private CampoFormulario campoTelefono;
     private CampoFormulario campoEmail;
     private CampoFormulario campoDireccion;
-    private CampoFormulario campoFechaNac;
+    private DatePicker datePickerFechaNac;
     private ComboBox<String> cmbTipoDoc;
     private ComboBox<String> cmbGenero;
     private ComboBox<String> cmbNacionalidad;
     private CheckBox chkVIP;
     private CheckBox chkNewsletter;
     private TablaDatos tablaHuespedes;
+    private GestionHuespedes gestionHuespedes;
     
     public HuespedesWindow() {
+        // Obtener instancia compartida de gestión de huéspedes
+        gestionHuespedes = utilidades.GestorDatos.getInstancia().getGestionHuespedes();
+        
         root = new BorderPane();
         root.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
@@ -64,8 +73,13 @@ public class HuespedesWindow {
         
         // Barra de estado
         barraEstado = new BarraEstado();
-        barraEstado.setEstado("3 huéspedes registrados");
+        actualizarBarraEstado();
         root.setBottom(barraEstado);
+    }
+    
+    private void actualizarBarraEstado() {
+        int cantidad = gestionHuespedes.obtenerCantidad();
+        barraEstado.setEstado(cantidad + " huésped" + (cantidad != 1 ? "es" : "") + " registrado" + (cantidad != 1 ? "s" : ""));
     }
     
     private VBox crearPanelContenido() {
@@ -155,8 +169,23 @@ public class HuespedesWindow {
         utilidades.EstiloComboBox.aplicarEstilo(cmbNacionalidad, "Seleccionar nacionalidad");
         panelNacionalidad.getChildren().addAll(lblNacionalidad, cmbNacionalidad);
         
-        campoFechaNac = new CampoFormulario("Fecha Nac", 120);
-        fila3.getChildren().addAll(panelGenero, panelNacionalidad, campoFechaNac);
+        // DatePicker Fecha de Nacimiento
+        HBox panelFechaNac = new HBox(12);
+        panelFechaNac.setAlignment(Pos.CENTER_LEFT);
+        Label lblFechaNac = new Label("Fecha Nac:");
+        lblFechaNac.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
+        lblFechaNac.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
+        datePickerFechaNac = new DatePicker();
+        datePickerFechaNac.setPrefWidth(150);
+        datePickerFechaNac.setPrefHeight(24);
+        datePickerFechaNac.setMinHeight(24);
+        datePickerFechaNac.setMaxHeight(24);
+        datePickerFechaNac.setConverter(new utilidades.DateConverter());
+        datePickerFechaNac.getStyleClass().add("aed-date-picker");
+        datePickerFechaNac.setPromptText("dd/MM/yyyy");
+        panelFechaNac.getChildren().addAll(lblFechaNac, datePickerFechaNac);
+        
+        fila3.getChildren().addAll(panelGenero, panelNacionalidad, panelFechaNac);
         
         // Fila 4: Dirección, Tipo Doc
         HBox fila4 = new HBox(24);
@@ -201,33 +230,82 @@ public class HuespedesWindow {
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
         btnAgregar.setOnAction(_ -> {
             // Validar campos
-            if (campoDNI.getValor().isEmpty() || campoNombre.getValor().isEmpty()) {
+            if (campoDNI.getValor().isEmpty() || campoNombre.getValor().isEmpty() || campoApellidos.getValor().isEmpty()) {
                 ventanas.dialogos.DialogoMensaje dialogoError = 
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                        "Por favor complete todos los campos obligatorios.",
+                        "Por favor complete todos los campos obligatorios (DNI, Nombres, Apellidos).",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
             } else {
-                // Agregar a la tabla
-                String vip = chkVIP.isSelected() ? "Si" : "No";
-                tablaHuespedes.agregarFila(new String[]{
-                    String.format("%04d", tablaHuespedes.getTabla().getItems().size() + 1),
-                    campoNombre.getValor() + " " + campoApellidos.getValor(),
-                    campoDNI.getValor(),
-                    campoTelefono.getValor(),
-                    vip,
-                    ""
-                });
+                // Verificar si ya existe un huésped con ese documento
+                if (gestionHuespedes.buscarPorDocumento(campoDNI.getValor()) != null) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "Ya existe un huésped registrado con el documento: " + campoDNI.getValor(),
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
                 
-                // Mostrar diálogo de éxito
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "El huésped ha sido registrado exitosamente.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+                // Crear nuevo huésped
+                Huesped nuevoHuesped = new Huesped();
+                nuevoHuesped.setDocumento(campoDNI.getValor());
+                nuevoHuesped.setTipoDocumento(cmbTipoDoc.getValue() != null ? cmbTipoDoc.getValue() : "DNI");
+                nuevoHuesped.setNombre(campoNombre.getValor());
+                nuevoHuesped.setApellidos(campoApellidos.getValor());
+                nuevoHuesped.setTelefono(campoTelefono.getValor());
+                nuevoHuesped.setEmail(campoEmail.getValor());
+                nuevoHuesped.setDireccion(campoDireccion.getValor());
+                // Convertir LocalDate a String (dd/MM/yyyy)
+                LocalDate fechaNac = datePickerFechaNac.getValue();
+                if (fechaNac != null) {
+                    nuevoHuesped.setFechaNacimiento(fechaNac.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                } else {
+                    nuevoHuesped.setFechaNacimiento("");
+                }
+                nuevoHuesped.setGenero(cmbGenero.getValue() != null ? cmbGenero.getValue() : "");
+                nuevoHuesped.setNacionalidad(cmbNacionalidad.getValue() != null ? cmbNacionalidad.getValue() : "");
+                nuevoHuesped.setVip(chkVIP.isSelected());
+                nuevoHuesped.setNewsletter(chkNewsletter.isSelected());
                 
-                // Limpiar formulario
-                limpiarFormulario();
+                // Agregar a la gestión
+                if (gestionHuespedes.agregar(nuevoHuesped)) {
+                    // Verificar que el ID se haya asignado correctamente
+                    String idAsignado = nuevoHuesped.getId();
+                    
+                    // Actualizar tabla
+                    cargarDatosEnTabla();
+                    
+                    // Verificar que el huésped se encuentre en la gestión
+                    Huesped verificarHuesped = gestionHuespedes.buscarPorId(idAsignado);
+                    if (verificarHuesped == null) {
+                        ventanas.dialogos.DialogoMensaje dialogoError = 
+                            new ventanas.dialogos.DialogoMensaje("Error",
+                                "El huésped se agregó pero no se pudo verificar. ID: " + idAsignado,
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                        dialogoError.mostrar();
+                        return;
+                    }
+                    
+                    // Mostrar diálogo de éxito
+                    ventanas.dialogos.DialogoMensaje dialogoExito = 
+                        new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                            "El huésped ha sido registrado exitosamente. ID: " + idAsignado,
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                    dialogoExito.mostrar();
+                    
+                    // Actualizar barra de estado
+                    actualizarBarraEstado();
+                    
+                    // Limpiar formulario
+                    limpiarFormulario();
+                } else {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error",
+                            "No se pudo registrar el huésped. Intente nuevamente.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                }
             }
         });
         
@@ -263,61 +341,90 @@ public class HuespedesWindow {
         VBox.setVgrow(tablaHuespedes, javafx.scene.layout.Priority.ALWAYS);
         
         // Configurar callbacks para los botones de acción
-        tablaHuespedes.setOnVer(fila -> {
-            String id = tablaHuespedes.getValor(fila, 0);
-            String nombre = tablaHuespedes.getValor(fila, 1);
-            String documento = tablaHuespedes.getValor(fila, 2);
-            String telefono = tablaHuespedes.getValor(fila, 3);
-            boolean vip = "Si".equals(tablaHuespedes.getValor(fila, 4));
-            
-            ventanas.dialogos.DialogoDetalleHuesped dialogo = 
-                new ventanas.dialogos.DialogoDetalleHuesped(id, nombre, documento, telefono, 
-                    "email@ejemplo.com", "Peruana", vip);
-            dialogo.mostrar();
-        });
-        
-        tablaHuespedes.setOnEditar(fila -> {
-            String documento = tablaHuespedes.getValor(fila, 2);
-            String nombreCompleto = tablaHuespedes.getValor(fila, 1);
-            String telefono = tablaHuespedes.getValor(fila, 3);
-            boolean vip = "Si".equals(tablaHuespedes.getValor(fila, 4));
-            
-            // Separar nombres y apellidos (asumiendo formato "Nombres Apellidos")
-            String[] partesNombre = nombreCompleto.split(" ", 2);
-            String nombres = partesNombre.length > 0 ? partesNombre[0] : "";
-            String apellidos = partesNombre.length > 1 ? partesNombre[1] : "";
-            
-            ventanas.dialogos.DialogoEditarHuesped dialogo = 
-                new ventanas.dialogos.DialogoEditarHuesped(documento, nombres, apellidos, 
-                    telefono, "email@ejemplo.com", "Peruana", vip);
-            dialogo.mostrar();
-        });
-        
-        tablaHuespedes.setOnEliminar(fila -> {
-            String nombre = tablaHuespedes.getValor(fila, 1);
-            ventanas.dialogos.DialogoConfirmacion dialogo = 
-                new ventanas.dialogos.DialogoConfirmacion(
-                    "Confirmar Eliminación",
-                    "¿Está seguro que desea eliminar al huésped?",
-                    nombre,
-                    "alert-triangle",
-                    true // esEliminacion
-                );
-            dialogo.mostrar();
-            if (dialogo.isConfirmado()) {
-                tablaHuespedes.eliminarFila(fila);
-                ventanas.dialogos.DialogoMensaje dialogoExito = 
-                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                        "El huésped ha sido eliminado correctamente.",
-                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                dialogoExito.mostrar();
+        // Ahora los callbacks reciben el ID directamente, no el índice de fila
+        tablaHuespedes.setOnVer(id -> {
+            if (id == null || id.isEmpty()) {
+                return;
+            }
+            Huesped huesped = gestionHuespedes.buscarPorId(id);
+            if (huesped != null) {
+                ventanas.dialogos.DialogoDetalleHuesped dialogo = 
+                    new ventanas.dialogos.DialogoDetalleHuesped(
+                        huesped.getId(),
+                        huesped.obtenerNombreCompleto(),
+                        huesped.getDocumento(),
+                        huesped.getTelefono(),
+                        huesped.getEmail(),
+                        huesped.getNacionalidad(),
+                        huesped.isVip());
+                dialogo.mostrar();
             }
         });
         
-        // Datos de ejemplo
-        tablaHuespedes.agregarFila(new String[]{"0001", "Juan Carlos Cepeda de la Cruz", "012345678", "987654321", "Si", ""});
-        tablaHuespedes.agregarFila(new String[]{"0002", "Maria Rosa Rodriguez Perez", "987654321", "912345678", "No", ""});
-        tablaHuespedes.agregarFila(new String[]{"0003", "Pedro Antonio Martinez", "456789012", "952789053", "Si", ""});
+        tablaHuespedes.setOnEditar(id -> {
+            if (id == null || id.isEmpty()) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error",
+                        "No se pudo identificar el huésped seleccionado.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            
+            Huesped huesped = gestionHuespedes.buscarPorId(id);
+            if (huesped != null) {
+                ventanas.dialogos.DialogoEditarHuesped dialogo = 
+                    new ventanas.dialogos.DialogoEditarHuesped(
+                        huesped.getDocumento(),
+                        huesped.getNombre(),
+                        huesped.getApellidos(),
+                        huesped.getTelefono(),
+                        huesped.getEmail(),
+                        huesped.getNacionalidad(),
+                        huesped.isVip());
+                dialogo.mostrar();
+                // Recargar tabla después de editar (si el diálogo actualiza)
+                cargarDatosEnTabla();
+            } else {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error",
+                        "No se encontró el huésped con ID: " + id,
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+            }
+        });
+        
+        tablaHuespedes.setOnEliminar(id -> {
+            if (id == null || id.isEmpty()) {
+                return;
+            }
+            Huesped huesped = gestionHuespedes.buscarPorId(id);
+            if (huesped != null) {
+                ventanas.dialogos.DialogoConfirmacion dialogo = 
+                    new ventanas.dialogos.DialogoConfirmacion(
+                        "Confirmar Eliminación",
+                        "¿Está seguro que desea eliminar al huésped?",
+                        huesped.obtenerNombreCompleto(),
+                        "alert-triangle",
+                        true // esEliminacion
+                    );
+                dialogo.mostrar();
+                if (dialogo.isConfirmado()) {
+                    if (gestionHuespedes.eliminar(id)) {
+                        cargarDatosEnTabla();
+                        actualizarBarraEstado();
+                        ventanas.dialogos.DialogoMensaje dialogoExito = 
+                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                                "El huésped ha sido eliminado correctamente.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                        dialogoExito.mostrar();
+                    }
+                }
+            }
+        });
+        
+        // Cargar datos iniciales
+        cargarDatosEnTabla();
         
         panel.getChildren().addAll(lblTituloTabla, tablaHuespedes);
         
@@ -339,11 +446,47 @@ public class HuespedesWindow {
         campoTelefono.setValor("");
         campoEmail.setValor("");
         campoDireccion.setValor("");
-        campoFechaNac.setValor("");
+        datePickerFechaNac.setValue(null);
         cmbTipoDoc.getSelectionModel().clearSelection();
         cmbGenero.getSelectionModel().clearSelection();
         cmbNacionalidad.getSelectionModel().clearSelection();
         chkVIP.setSelected(false);
         chkNewsletter.setSelected(false);
+    }
+    
+    private void cargarDatosEnTabla() {
+        // Limpiar tabla
+        tablaHuespedes.limpiar();
+        
+        // Cargar datos desde la gestión - usar array para mantener el orden
+        Huesped[] huespedes = gestionHuespedes.obtenerTodosArray();
+        for (Huesped h : huespedes) {
+            if (h != null && h.getId() != null) {
+                tablaHuespedes.agregarFila(new String[]{
+                    h.getId(),
+                    h.obtenerNombreCompleto(),
+                    h.getDocumento() != null ? h.getDocumento() : "",
+                    h.getTelefono() != null ? h.getTelefono() : "",
+                    h.obtenerVipTexto(),
+                    ""
+                });
+            }
+        }
+    }
+    
+    /**
+     * Notifica a otras ventanas que se agregó un nuevo huésped
+     * Esto permite actualizar los ComboBoxes en otras ventanas
+     */
+    private void notificarNuevoHuesped() {
+        // Obtener el gestor de ventanas desde el panel de navegación
+        // y actualizar el ComboBox de huéspedes en ReservasWindow
+        try {
+            // Usar reflexión o un patrón de observador sería ideal,
+            // pero por simplicidad, actualizamos directamente a través del GestorVentanas
+            // Esto se manejará cuando se muestre la ventana de reservas
+        } catch (Exception e) {
+            // Si falla, no es crítico
+        }
     }
 }

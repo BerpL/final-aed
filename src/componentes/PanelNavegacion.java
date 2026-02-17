@@ -61,7 +61,7 @@ public class PanelNavegacion extends VBox {
         seccionPerfil.setStyle("-fx-background-color: #" + Constantes.COLOR_PANEL_LATERAL.toString().substring(2, 8) + ";");
         
         // Icono de avatar/perfil
-        IconoSimple iconoAvatar = IconoSimple.crearIconoUsuario(40, Constantes.COLOR_TEXTO_PRINCIPAL);
+        IconoSimple iconoAvatar = IconoSimple.crearIconoUsuario(40, Constantes.COLOR_PRIMARIO);
         
         // Label con el nombre de usuario (mocked: "admin")
         Label lblUsuario = new Label("admin");

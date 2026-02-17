@@ -23,9 +23,10 @@ public class TablaDatos extends VBox {
     private String[] columnas; // Se usa en el código, pero Eclipse no lo detecta correctamente
     
     // Callbacks para acciones de botones
-    private java.util.function.Consumer<Integer> onVer;
-    private java.util.function.Consumer<Integer> onEditar;
-    private java.util.function.Consumer<Integer> onEliminar;
+    // Cambiar a Consumer<String> para pasar el ID directamente en lugar del índice
+    private java.util.function.Consumer<String> onVer;
+    private java.util.function.Consumer<String> onEditar;
+    private java.util.function.Consumer<String> onEliminar;
     
     public TablaDatos(String[] columnas) {
         this.columnas = columnas;
@@ -66,24 +67,60 @@ public class TablaDatos extends VBox {
                             BotonAccion btnEditar = BotonAccion.crearBotonEditar();
                             BotonAccion btnEliminar = BotonAccion.crearBotonEliminar();
                             
-                            final int filaIndex = getIndex();
-                            
-                            btnVer.setOnMouseClicked(_ -> {
+                            // Obtener el ID directamente del item de la fila cuando se hace clic
+                            // Esto es más confiable que usar índices que pueden cambiar
+                            btnVer.setOnMouseClicked(e -> {
                                 if (onVer != null) {
-                                    onVer.accept(filaIndex);
+                                    // Obtener el item de la fila completa desde el TableRow
+                                    javafx.scene.control.TableRow<ObservableList<String>> row = getTableRow();
+                                    if (row != null) {
+                                        ObservableList<String> filaCompleta = row.getItem();
+                                        if (filaCompleta != null && !filaCompleta.isEmpty()) {
+                                            // Pasar el ID (primera columna) directamente
+                                            String id = filaCompleta.get(0);
+                                            if (id != null && !id.isEmpty()) {
+                                                onVer.accept(id);
+                                            }
+                                        }
+                                    }
                                 }
+                                e.consume();
                             });
                             
-                            btnEditar.setOnMouseClicked(_ -> {
+                            btnEditar.setOnMouseClicked(e -> {
                                 if (onEditar != null) {
-                                    onEditar.accept(filaIndex);
+                                    // Obtener el item de la fila completa desde el TableRow
+                                    javafx.scene.control.TableRow<ObservableList<String>> row = getTableRow();
+                                    if (row != null) {
+                                        ObservableList<String> filaCompleta = row.getItem();
+                                        if (filaCompleta != null && !filaCompleta.isEmpty()) {
+                                            // Pasar el ID (primera columna) directamente
+                                            String id = filaCompleta.get(0);
+                                            if (id != null && !id.isEmpty()) {
+                                                onEditar.accept(id);
+                                            }
+                                        }
+                                    }
                                 }
+                                e.consume();
                             });
                             
-                            btnEliminar.setOnMouseClicked(_ -> {
+                            btnEliminar.setOnMouseClicked(e -> {
                                 if (onEliminar != null) {
-                                    onEliminar.accept(filaIndex);
+                                    // Obtener el item de la fila completa desde el TableRow
+                                    javafx.scene.control.TableRow<ObservableList<String>> row = getTableRow();
+                                    if (row != null) {
+                                        ObservableList<String> filaCompleta = row.getItem();
+                                        if (filaCompleta != null && !filaCompleta.isEmpty()) {
+                                            // Pasar el ID (primera columna) directamente
+                                            String id = filaCompleta.get(0);
+                                            if (id != null && !id.isEmpty()) {
+                                                onEliminar.accept(id);
+                                            }
+                                        }
+                                    }
                                 }
+                                e.consume();
                             });
                             
                             panel.getChildren().addAll(btnVer, btnEditar, btnEliminar);
@@ -388,15 +425,16 @@ public class TablaDatos extends VBox {
     }
     
     // Métodos para configurar callbacks
-    public void setOnVer(java.util.function.Consumer<Integer> callback) {
+    // Ahora reciben el ID (String) directamente en lugar del índice (Integer)
+    public void setOnVer(java.util.function.Consumer<String> callback) {
         this.onVer = callback;
     }
     
-    public void setOnEditar(java.util.function.Consumer<Integer> callback) {
+    public void setOnEditar(java.util.function.Consumer<String> callback) {
         this.onEditar = callback;
     }
     
-    public void setOnEliminar(java.util.function.Consumer<Integer> callback) {
+    public void setOnEliminar(java.util.function.Consumer<String> callback) {
         this.onEliminar = callback;
     }
 }
