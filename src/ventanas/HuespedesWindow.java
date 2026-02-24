@@ -7,6 +7,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -82,6 +83,44 @@ public class HuespedesWindow {
         barraEstado.setEstado(cantidad + " huésped" + (cantidad != 1 ? "es" : "") + " registrado" + (cantidad != 1 ? "s" : ""));
     }
     
+    private static void aplicarFormatoSoloNumeros(CampoFormulario campo, int maxDigitos) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > maxDigitos) return null;
+            return change;
+        }));
+    }
+    
+    private static void aplicarFormatoSoloLetrasYEspacios(CampoFormulario campo) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]*")) return null;
+            return change;
+        }));
+    }
+    
+    private static void aplicarFormatoTelefono(CampoFormulario campo) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9+\\s-]*") || newText.length() > 15) return null;
+            return change;
+        }));
+    }
+    
+    private static boolean esEmailValido(String email) {
+        if (email == null || email.trim().isEmpty()) return true;
+        return email.matches("^[^@]+@[^@]+\\.[^@]+$");
+    }
+    
+    private static boolean esDocumentoValido(String tipoDoc, String documento) {
+        if (documento == null || documento.trim().isEmpty()) return false;
+        if ("DNI".equals(tipoDoc)) return documento.matches("[0-9]{8}");
+        return documento.matches("[0-9]{1,12}");
+    }
+    
     private VBox crearPanelContenido() {
         VBox panel = new VBox(16);
         panel.setPadding(new Insets(16));
@@ -122,18 +161,22 @@ public class HuespedesWindow {
         lblTituloForm.setFont(Constantes.FUENTE_SUBTITULO);
         lblTituloForm.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         
-        // Fila 1: DNI, Nombres, Apellidos
+        // Fila 1: DNI, Nombres, Apellidos (con validaciones de formato)
         HBox fila1 = new HBox(24);
         fila1.setAlignment(Pos.CENTER_LEFT);
-        campoDNI = new CampoFormulario("DNI", 120);
-        campoNombre = new CampoFormulario("Nombres", 200);
-        campoApellidos = new CampoFormulario("Apellidos", 200);
+        campoDNI = new CampoFormulario("Documento *", 120);
+        aplicarFormatoSoloNumeros(campoDNI, 12);
+        campoNombre = new CampoFormulario("Nombres *", 200);
+        aplicarFormatoSoloLetrasYEspacios(campoNombre);
+        campoApellidos = new CampoFormulario("Apellidos *", 200);
+        aplicarFormatoSoloLetrasYEspacios(campoApellidos);
         fila1.getChildren().addAll(campoDNI, campoNombre, campoApellidos);
         
         // Fila 2: Teléfono, Email
         HBox fila2 = new HBox(24);
         fila2.setAlignment(Pos.CENTER_LEFT);
         campoTelefono = new CampoFormulario("Teléfono", 150);
+        aplicarFormatoTelefono(campoTelefono);
         campoEmail = new CampoFormulario("Email", 250);
         fila2.getChildren().addAll(campoTelefono, campoEmail);
         
@@ -194,7 +237,7 @@ public class HuespedesWindow {
         
         HBox panelTipoDoc = new HBox(12);
         panelTipoDoc.setAlignment(Pos.CENTER_LEFT);
-        Label lblTipoDoc = new Label("Tipo Doc:");
+        Label lblTipoDoc = new Label("Tipo Doc *:");
         lblTipoDoc.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblTipoDoc.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbTipoDoc = new ComboBox<>();
@@ -229,33 +272,54 @@ public class HuespedesWindow {
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
         btnAgregar.setOnAction(_ -> {
-            // Validar campos
-            if (campoDNI.getValor().isEmpty() || campoNombre.getValor().isEmpty() || campoApellidos.getValor().isEmpty()) {
+            String doc = campoDNI.getValor() != null ? campoDNI.getValor().trim() : "";
+            String nombres = campoNombre.getValor() != null ? campoNombre.getValor().trim() : "";
+            String apellidos = campoApellidos.getValor() != null ? campoApellidos.getValor().trim() : "";
+            String telefono = campoTelefono.getValor() != null ? campoTelefono.getValor().trim() : "";
+            String email = campoEmail.getValor() != null ? campoEmail.getValor().trim() : "";
+            String tipoDoc = cmbTipoDoc.getValue() != null ? cmbTipoDoc.getValue() : "DNI";
+            
+            if (doc.isEmpty() || nombres.isEmpty() || apellidos.isEmpty()) {
                 ventanas.dialogos.DialogoMensaje dialogoError = 
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                        "Por favor complete todos los campos obligatorios (DNI, Nombres, Apellidos).",
+                        "Complete los campos obligatorios: Documento, Nombres y Apellidos.",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
-            } else {
-                // Verificar si ya existe un huésped con ese documento
-                if (gestionHuespedes.buscarPorDocumento(campoDNI.getValor()) != null) {
-                    ventanas.dialogos.DialogoMensaje dialogoError = 
-                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                            "Ya existe un huésped registrado con el documento: " + campoDNI.getValor(),
-                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
-                    dialogoError.mostrar();
-                    return;
-                }
-                
-                // Crear nuevo huésped
+                return;
+            }
+            if (!esDocumentoValido(tipoDoc, doc)) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "DNI debe tener exactamente 8 dígitos. Otros documentos: solo números (máx. 12).",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            if (!esEmailValido(email)) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "El formato del correo electrónico no es válido (ejemplo: usuario@dominio.com).",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            if (gestionHuespedes.buscarPorDocumento(doc) != null) {
+                ventanas.dialogos.DialogoMensaje dialogoError = 
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Ya existe un huésped registrado con el documento: " + doc,
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            
                 Huesped nuevoHuesped = new Huesped();
-                nuevoHuesped.setDocumento(campoDNI.getValor());
-                nuevoHuesped.setTipoDocumento(cmbTipoDoc.getValue() != null ? cmbTipoDoc.getValue() : "DNI");
-                nuevoHuesped.setNombre(campoNombre.getValor());
-                nuevoHuesped.setApellidos(campoApellidos.getValor());
-                nuevoHuesped.setTelefono(campoTelefono.getValor());
-                nuevoHuesped.setEmail(campoEmail.getValor());
-                nuevoHuesped.setDireccion(campoDireccion.getValor());
+                nuevoHuesped.setDocumento(doc);
+                nuevoHuesped.setTipoDocumento(tipoDoc);
+                nuevoHuesped.setNombre(nombres);
+                nuevoHuesped.setApellidos(apellidos);
+                nuevoHuesped.setTelefono(telefono);
+                nuevoHuesped.setEmail(email);
+                nuevoHuesped.setDireccion(campoDireccion.getValor() != null ? campoDireccion.getValor().trim() : "");
                 // Convertir LocalDate a String (dd/MM/yyyy)
                 LocalDate fechaNac = datePickerFechaNac.getValue();
                 if (fechaNac != null) {
@@ -306,7 +370,6 @@ public class HuespedesWindow {
                             ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                     dialogoError.mostrar();
                 }
-            }
         });
         
         Button btnLimpiar = new Button("Limpiar");
@@ -375,6 +438,7 @@ public class HuespedesWindow {
             if (huesped != null) {
                 ventanas.dialogos.DialogoEditarHuesped dialogo = 
                     new ventanas.dialogos.DialogoEditarHuesped(
+                        huesped.getTipoDocumento() != null ? huesped.getTipoDocumento() : "DNI",
                         huesped.getDocumento(),
                         huesped.getNombre(),
                         huesped.getApellidos(),
@@ -471,22 +535,6 @@ public class HuespedesWindow {
                     ""
                 });
             }
-        }
-    }
-    
-    /**
-     * Notifica a otras ventanas que se agregó un nuevo huésped
-     * Esto permite actualizar los ComboBoxes en otras ventanas
-     */
-    private void notificarNuevoHuesped() {
-        // Obtener el gestor de ventanas desde el panel de navegación
-        // y actualizar el ComboBox de huéspedes en ReservasWindow
-        try {
-            // Usar reflexión o un patrón de observador sería ideal,
-            // pero por simplicidad, actualizamos directamente a través del GestorVentanas
-            // Esto se manejará cuando se muestre la ventana de reservas
-        } catch (Exception e) {
-            // Si falla, no es crítico
         }
     }
 }

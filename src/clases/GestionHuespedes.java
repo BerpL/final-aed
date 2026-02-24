@@ -26,15 +26,16 @@ public class GestionHuespedes {
 	 * Inicializa datos mocked para pruebas
 	 */
 	private void inicializarDatosMocked() {
-		agregar(new Huesped("0001", "012345678", "DNI", "Juan Carlos", "Cepeda de la Cruz",
+		// DNI con exactamente 8 dígitos para pasar validación al editar
+		agregar(new Huesped("0001", "12345678", "DNI", "Juan Carlos", "Cepeda de la Cruz",
 		                    "987654321", "juan.carlos@email.com", "Av. Principal 123",
 		                    "15/05/1985", "Masculino", "Peruana", true, false));
 		
-		agregar(new Huesped("0002", "987654321", "DNI", "Maria Rosa", "Rodriguez Perez",
+		agregar(new Huesped("0002", "87654321", "DNI", "Maria Rosa", "Rodriguez Perez",
 		                    "912345678", "maria.rodriguez@email.com", "Jr. Los Olivos 456",
 		                    "22/08/1990", "Femenino", "Peruana", false, true));
 		
-		agregar(new Huesped("0003", "456789012", "DNI", "Pedro Antonio", "Martinez",
+		agregar(new Huesped("0003", "45678901", "DNI", "Pedro Antonio", "Martinez",
 		                    "952789053", "pedro.martinez@email.com", "Calle Real 789",
 		                    "10/12/1988", "Masculino", "Peruana", true, true));
 	}

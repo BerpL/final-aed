@@ -20,7 +20,6 @@ import clases.GestionReservas;
 import clases.GestionHuespedes;
 import clases.Habitacion;
 import clases.Reserva;
-import clases.Huesped;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -43,6 +42,7 @@ public class ReportesWindow {
     private Map<String, VBox> cardsReporte = new HashMap<>(); // Mapa para guardar las cards por tipo de reporte
     private GestionHabitaciones gestionHabitaciones;
     private GestionReservas gestionReservas;
+    @SuppressWarnings("unused") // Usado para datos de reportes (huéspedes)
     private GestionHuespedes gestionHuespedes;
     
     public ReportesWindow() {

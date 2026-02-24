@@ -6,6 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -55,7 +56,7 @@ public class TiposHabitacionWindow {
         panelPrincipal.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
         panelNavegacion = new PanelNavegacion();
-        panelNavegacion.seleccionarItem(3); // Tipos Habitación seleccionado
+        panelNavegacion.seleccionarItem(2); // Tipos Habitación seleccionado
         panelPrincipal.setLeft(panelNavegacion);
         
         VBox panelContenido = crearPanelContenido();
@@ -71,6 +72,16 @@ public class TiposHabitacionWindow {
     private void actualizarBarraEstado() {
         int cantidad = gestionTipos.obtenerCantidad();
         barraEstado.setEstado(cantidad + " tipo" + (cantidad != 1 ? "s" : "") + " registrado" + (cantidad != 1 ? "s" : ""));
+    }
+    
+    /** Restringe el campo a solo números (enteros o decimal con un punto). */
+    private void aplicarFormatoSoloNumeros(CampoFormulario campo) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*\\.?[0-9]*")) return null;
+            return change;
+        }));
     }
     
     private VBox crearPanelContenido() {
@@ -111,9 +122,14 @@ public class TiposHabitacionWindow {
         
         HBox fila1 = new HBox(24);
         fila1.setAlignment(Pos.CENTER_LEFT);
-        campoCodigo = new CampoFormulario("Código", 80);
-        campoNombre = new CampoFormulario("Nombre del Tipo", 200);
-        campoPrecio = new CampoFormulario("Precio Base", 120);
+        campoCodigo = new CampoFormulario("Código *", 140);
+        campoCodigo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            change.setText(change.getText().toUpperCase());
+            return change;
+        }));
+        campoNombre = new CampoFormulario("Nombre del Tipo *", 200);
+        campoPrecio = new CampoFormulario("Precio Base *", 120);
+        aplicarFormatoSoloNumeros(campoPrecio);
         fila1.getChildren().addAll(campoCodigo, campoNombre, campoPrecio);
         
         HBox fila2 = new HBox(24);
@@ -121,7 +137,7 @@ public class TiposHabitacionWindow {
         
         HBox panelCapacidad = new HBox(12);
         panelCapacidad.setAlignment(Pos.CENTER_LEFT);
-        Label lblCapacidad = new Label("Capacidad:");
+        Label lblCapacidad = new Label("Capacidad *:");
         lblCapacidad.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCapacidad.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbCapacidad = new ComboBox<>();
@@ -135,7 +151,7 @@ public class TiposHabitacionWindow {
         
         HBox panelCamas = new HBox(12);
         panelCamas.setAlignment(Pos.CENTER_LEFT);
-        Label lblCamas = new Label("Tipo de Camas:");
+        Label lblCamas = new Label("Tipo de Camas *:");
         lblCamas.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCamas.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbCamas = new ComboBox<>();
@@ -147,7 +163,8 @@ public class TiposHabitacionWindow {
         utilidades.EstiloComboBox.aplicarEstilo(cmbCamas, "Seleccionar tipo");
         panelCamas.getChildren().addAll(lblCamas, cmbCamas);
         
-        campoArea = new CampoFormulario("Área (m²)", 80);
+        campoArea = new CampoFormulario("Área (m²) *", 80);
+        aplicarFormatoSoloNumeros(campoArea);
         fila2.getChildren().addAll(panelCapacidad, panelCamas, campoArea);
         
         HBox fila3 = new HBox(24);
@@ -181,35 +198,62 @@ public class TiposHabitacionWindow {
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
         btnAgregar.setOnAction(_ -> {
-            // Validar campos
-            if (campoCodigo.getValor().isEmpty() || campoNombre.getValor().isEmpty() || 
-                campoPrecio.getValor().isEmpty() || cmbCapacidad.getValue() == null ||
-                cmbCamas.getValue() == null || campoArea.getValor().isEmpty()) {
+            String codigo = campoCodigo.getValor() != null ? campoCodigo.getValor().trim() : "";
+            String nombre = campoNombre.getValor() != null ? campoNombre.getValor().trim() : "";
+            String precioStr = campoPrecio.getValor() != null ? campoPrecio.getValor().trim() : "";
+            String areaStr = campoArea.getValor() != null ? campoArea.getValor().trim() : "";
+            if (codigo == null || codigo.isEmpty() || nombre.isEmpty() || precioStr.isEmpty() ||
+                cmbCapacidad.getValue() == null || cmbCamas.getValue() == null || areaStr.isEmpty()) {
                 ventanas.dialogos.DialogoMensaje dialogoError = 
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
                         "Por favor complete todos los campos obligatorios.",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
             } else {
-                // Verificar si ya existe un tipo con ese código
-                if (gestionTipos.buscarPorCodigo(campoCodigo.getValor()) != null) {
+                if (gestionTipos.buscarPorCodigo(codigo) != null) {
                     ventanas.dialogos.DialogoMensaje dialogoError = 
                         new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                            "Ya existe un tipo de habitación con el código: " + campoCodigo.getValor(),
+                            "Ya existe un tipo de habitación con el código: " + codigo,
                             ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                     dialogoError.mostrar();
                     return;
                 }
-                
+                double precio;
+                double area;
                 try {
-                    // Crear nuevo tipo de habitación
-                    TipoHabitacion nuevoTipo = new TipoHabitacion();
-                    nuevoTipo.setCodigo(campoCodigo.getValor());
-                    nuevoTipo.setNombre(campoNombre.getValor());
-                    nuevoTipo.setPrecioBase(Double.parseDouble(campoPrecio.getValor()));
+                    precio = Double.parseDouble(precioStr.replace(",", "."));
+                    area = Double.parseDouble(areaStr.replace(",", "."));
+                    if (precio <= 0) {
+                        ventanas.dialogos.DialogoMensaje dialogoError = 
+                            new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                                "El precio base debe ser mayor a 0.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                        dialogoError.mostrar();
+                        return;
+                    }
+                    if (area < 0) {
+                        ventanas.dialogos.DialogoMensaje dialogoError = 
+                            new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                                "El área no puede ser negativa.",
+                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                        dialogoError.mostrar();
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                            "El precio base y el área deben ser números válidos.",
+                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    dialogoError.mostrar();
+                    return;
+                }
+                TipoHabitacion nuevoTipo = new TipoHabitacion();
+                    nuevoTipo.setCodigo(codigo);
+                    nuevoTipo.setNombre(nombre);
+                    nuevoTipo.setPrecioBase(precio);
                     nuevoTipo.setCapacidad(Integer.parseInt(cmbCapacidad.getValue()));
                     nuevoTipo.setTipoCamas(cmbCamas.getValue());
-                    nuevoTipo.setArea(Double.parseDouble(campoArea.getValor()));
+                    nuevoTipo.setArea(area);
                     nuevoTipo.setWifi(chkWifi.isSelected());
                     nuevoTipo.setTv(chkTV.isSelected());
                     nuevoTipo.setAc(chkAC.isSelected());
@@ -241,13 +285,6 @@ public class TiposHabitacionWindow {
                                 ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                         dialogoError.mostrar();
                     }
-                } catch (NumberFormatException e) {
-                    ventanas.dialogos.DialogoMensaje dialogoError = 
-                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                            "El precio y el área deben ser números válidos.",
-                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
-                    dialogoError.mostrar();
-                }
             }
         });
         
@@ -305,15 +342,17 @@ public class TiposHabitacionWindow {
             }
             TipoHabitacion tipo = gestionTipos.buscarPorCodigo(codigo);
             if (tipo != null) {
-                ventanas.dialogos.DialogoEditarTipoHabitacion dialogo = 
+                ventanas.dialogos.DialogoEditarTipoHabitacion dialogo =
                     new ventanas.dialogos.DialogoEditarTipoHabitacion(
                         tipo.getCodigo(),
                         tipo.getNombre(),
                         String.valueOf(tipo.getCapacidad()),
                         tipo.obtenerPrecioFormateado(),
-                        tipo.getDescripcion());
+                        tipo.getDescripcion(),
+                        String.valueOf(tipo.getArea()),
+                        tipo.getTipoCamas() != null ? tipo.getTipoCamas() : "Doble",
+                        tipo.obtenerAmenidades() != null ? tipo.obtenerAmenidades() : "");
                 dialogo.mostrar();
-                // Recargar tabla después de editar
                 cargarDatosEnTabla();
             }
         });

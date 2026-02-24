@@ -7,7 +7,6 @@ module Reserva_de_hoteles {
 	requires org.kordamp.ikonli.fontawesome5;
 	requires org.apache.pdfbox;
 	requires org.apache.fontbox;
-	requires commons.logging;
 	
 	opens main to javafx.graphics, javafx.fxml;
 	opens ventanas to javafx.fxml;

@@ -6,42 +6,55 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import utilidades.Constantes;
 
 /**
- * Diálogo para editar una habitación
- * Diseño exacto según aed.pen (versión simplificada)
+ * Diálogo para editar una habitación.
+ * Validaciones: número y piso solo dígitos, precio solo numérico; validación al guardar.
  */
 public class DialogoEditarHabitacion extends DialogoBase {
-    
+
+    private TextField txtNumero;
+    private TextField txtPiso;
+    private TextField txtPrecio;
+    private ComboBox<String> comboTipo;
+    private ComboBox<String> comboCapacidad;
+    private ComboBox<String> comboEstado;
+
     public DialogoEditarHabitacion(String numero, String tipo, String piso, 
                                    String capacidad, String precio, String estado, String amenidades) {
         super("Editar Habitación", Color.rgb(245, 158, 11), 520, 0); // #F59E0B, un poco más ancho
         
         content.setSpacing(10);
-        // No sobrescribir padding - usar el de DialogoBase (20)
         content.setVisible(true);
         content.setManaged(true);
-        
-        // Fila 1: Número
-        agregarCampo("Número:", numero, 80);
-        
-        // Fila 2: Tipo
+
+        // Fila 1: Número (solo dígitos)
+        txtNumero = crearCampoConEstilo(numero != null ? numero : "", 80);
+        aplicarFormatoSoloNumeros(txtNumero, 10);
+        content.getChildren().add(crearFilaCampo("Número *:", txtNumero));
+
+        // Fila 2: Tipo (ComboBox)
         HBox fila2 = new HBox(16);
         fila2.setAlignment(Pos.CENTER_LEFT);
-        Label lblTipo = new Label("Tipo:");
+        Label lblTipo = new Label("Tipo *:");
         lblTipo.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lblTipo.setTextFill(Color.rgb(0, 0, 0)); // #000000
+        lblTipo.setTextFill(Color.rgb(0, 0, 0));
         lblTipo.setStyle("-fx-text-fill: #000000;");
         lblTipo.setWrapText(false);
-        lblTipo.setVisible(true);
-        lblTipo.setManaged(true);
-        ComboBox<String> comboTipo = new ComboBox<>();
-        comboTipo.getItems().addAll("Suite Presidencial", "Suite Ejecutiva", "Habitación Estándar", "Habitación Doble");
-        comboTipo.setValue(tipo);
+        comboTipo = new ComboBox<>();
+        java.util.List<String> nombresTipos = java.util.Arrays.asList(
+            utilidades.GestorDatos.getInstancia().getGestionTiposHabitacion().obtenerNombresTipos());
+        comboTipo.getItems().setAll(nombresTipos);
+        if (tipo != null && !tipo.isEmpty() && nombresTipos.contains(tipo)) {
+            comboTipo.setValue(tipo);
+        } else if (!nombresTipos.isEmpty()) {
+            comboTipo.setValue(nombresTipos.get(0));
+        }
         comboTipo.setPrefWidth(180);
         comboTipo.setPrefHeight(24);
         comboTipo.setMinHeight(24);
@@ -49,24 +62,24 @@ public class DialogoEditarHabitacion extends DialogoBase {
         utilidades.EstiloComboBox.aplicarEstilo(comboTipo, "Seleccionar tipo");
         fila2.getChildren().addAll(lblTipo, comboTipo);
         content.getChildren().add(fila2);
-        
-        // Fila 3: Piso (simplificado como TextField)
-        agregarCampo("Piso:", piso, 80);
-        
-        // Fila 4: Capacidad (ComboBox, igual que formulario principal)
+
+        // Fila 3: Piso (solo dígitos)
+        txtPiso = crearCampoConEstilo(piso != null ? piso : "", 80);
+        aplicarFormatoSoloNumeros(txtPiso, 3);
+        content.getChildren().add(crearFilaCampo("Piso *:", txtPiso));
+
+        // Fila 4: Capacidad
         HBox filaCapacidad = new HBox(16);
         filaCapacidad.setAlignment(Pos.CENTER_LEFT);
-        Label lblCapacidad = new Label("Capacidad:");
+        Label lblCapacidad = new Label("Capacidad *:");
         lblCapacidad.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lblCapacidad.setTextFill(Color.rgb(0, 0, 0)); // #000000
+        lblCapacidad.setTextFill(Color.rgb(0, 0, 0));
         lblCapacidad.setStyle("-fx-text-fill: #000000;");
-        lblCapacidad.setWrapText(false);
-        lblCapacidad.setVisible(true);
-        lblCapacidad.setManaged(true);
-        ComboBox<String> comboCapacidad = new ComboBox<>();
+        comboCapacidad = new ComboBox<>();
         comboCapacidad.getItems().addAll("1", "2", "3", "4", "5", "6");
         if (capacidad != null && !capacidad.isEmpty()) {
-            comboCapacidad.setValue(capacidad.replaceAll("\\D+", "").isEmpty() ? "1" : capacidad.replaceAll("\\D+", ""));
+            String capNum = capacidad.replaceAll("\\D+", "");
+            comboCapacidad.setValue(capNum.isEmpty() ? "1" : capNum);
         } else {
             comboCapacidad.setValue("1");
         }
@@ -77,23 +90,23 @@ public class DialogoEditarHabitacion extends DialogoBase {
         utilidades.EstiloComboBox.aplicarEstilo(comboCapacidad, "Seleccionar");
         filaCapacidad.getChildren().addAll(lblCapacidad, comboCapacidad);
         content.getChildren().add(filaCapacidad);
-        
-        // Fila 5: Precio/Noche
-        agregarCampo("Precio/Noche:", precio, 120);
-        
+
+        // Fila 5: Precio/Noche (solo numérico)
+        String precioLimpio = precio != null ? precio.replace("S/.", "").replace(",", ".").trim() : "";
+        txtPrecio = crearCampoConEstilo(precioLimpio, 120);
+        aplicarFormatoSoloNumerosDecimales(txtPrecio);
+        content.getChildren().add(crearFilaCampo("Precio/Noche *:", txtPrecio));
+
         // Fila 6: Estado
         HBox fila6 = new HBox(16);
         fila6.setAlignment(Pos.CENTER_LEFT);
-        Label lblEstado = new Label("Estado:");
+        Label lblEstado = new Label("Estado *:");
         lblEstado.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lblEstado.setTextFill(Color.rgb(0, 0, 0)); // #000000
+        lblEstado.setTextFill(Color.rgb(0, 0, 0));
         lblEstado.setStyle("-fx-text-fill: #000000;");
-        lblEstado.setWrapText(false);
-        lblEstado.setVisible(true);
-        lblEstado.setManaged(true);
-        ComboBox<String> comboEstado = new ComboBox<>();
+        comboEstado = new ComboBox<>();
         comboEstado.getItems().addAll("Disponible", "Ocupada", "Mantenimiento");
-        comboEstado.setValue(estado);
+        comboEstado.setValue(estado != null ? estado : "Disponible");
         comboEstado.setPrefWidth(140);
         comboEstado.setPrefHeight(24);
         comboEstado.setMinHeight(24);
@@ -169,7 +182,32 @@ public class DialogoEditarHabitacion extends DialogoBase {
                            "-fx-padding: 6 20 6 20; " +
                            "-fx-cursor: hand;");
         btnGuardar.setOnAction(_ -> {
-            // TODO: Implementar guardado
+            String numeroVal = txtNumero.getText() != null ? txtNumero.getText().trim() : "";
+            String tipoVal = comboTipo.getValue() != null ? comboTipo.getValue().trim() : "";
+            String pisoVal = txtPiso.getText() != null ? txtPiso.getText().trim() : "";
+            String precioStr = txtPrecio.getText() != null ? txtPrecio.getText().trim() : "";
+            if (numeroVal.isEmpty() || tipoVal.isEmpty() || pisoVal.isEmpty() || precioStr.isEmpty()) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "Complete los campos obligatorios: Número, Tipo, Piso y Precio/Noche.", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            double precioVal;
+            try {
+                precioVal = Double.parseDouble(precioStr.replace(",", "."));
+                if (precioVal <= 0) {
+                    DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                        "El precio por noche debe ser mayor a 0.", DialogoMensaje.TipoMensaje.ERROR);
+                    d.mostrar();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "El precio debe ser un número válido.", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            // TODO: Implementar guardado (actualizar en gestor por número)
             cerrar();
         });
         
@@ -191,16 +229,7 @@ public class DialogoEditarHabitacion extends DialogoBase {
         root.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
     }
     
-    private void agregarCampo(String etiqueta, String valor, int ancho) {
-        HBox fila = new HBox(16);
-        fila.setAlignment(Pos.CENTER_LEFT);
-        Label lbl = new Label(etiqueta);
-        lbl.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lbl.setTextFill(Color.rgb(0, 0, 0)); // #000000
-        lbl.setStyle("-fx-text-fill: #000000;");
-        lbl.setWrapText(false);
-        lbl.setVisible(true);
-        lbl.setManaged(true);
+    private TextField crearCampoConEstilo(String valor, int ancho) {
         TextField txt = new TextField(valor);
         txt.setPrefWidth(ancho);
         txt.setPrefHeight(24);
@@ -209,8 +238,37 @@ public class DialogoEditarHabitacion extends DialogoBase {
         String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
         String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
         txt.setStyle("-fx-border-color: #" + colorBorde + "; -fx-background-color: #" + colorFondo + "; -fx-padding: 4 8 4 8; -fx-effect: null;");
+        return txt;
+    }
+
+    private HBox crearFilaCampo(String etiqueta, TextField txt) {
+        HBox fila = new HBox(16);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        Label lbl = new Label(etiqueta);
+        lbl.setFont(javafx.scene.text.Font.font("Arial", 11));
+        lbl.setTextFill(Color.rgb(0, 0, 0));
+        lbl.setStyle("-fx-text-fill: #000000;");
+        lbl.setWrapText(false);
         fila.getChildren().addAll(lbl, txt);
-        content.getChildren().add(fila);
+        return fila;
+    }
+
+    private static void aplicarFormatoSoloNumeros(TextField campo, int maxDigitos) {
+        campo.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > maxDigitos) return null;
+            return change;
+        }));
+    }
+
+    private static void aplicarFormatoSoloNumerosDecimales(TextField campo) {
+        campo.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*\\.?[0-9]*")) return null;
+            return change;
+        }));
     }
 }
 

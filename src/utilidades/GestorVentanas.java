@@ -36,12 +36,12 @@ public class GestorVentanas {
         reservasWindow = new ReservasWindow();
         reportesWindow = new ReportesWindow();
         
-        // Agregar ventanas al stack pane
+        // Agregar ventanas al stack pane (índice 2 = Tipos Habitación, 3 = Habitaciones)
         stackPane.getChildren().addAll(
             mainWindow.getRoot(),
             huespedesWindow.getRoot(),
-            habitacionesWindow.getRoot(),
             tiposHabitacionWindow.getRoot(),
+            habitacionesWindow.getRoot(),
             reservasWindow.getRoot(),
             reportesWindow.getRoot()
         );
@@ -66,11 +66,11 @@ public class GestorVentanas {
                     case 1: // Huéspedes
                         mostrarHuespedes();
                         break;
-                    case 2: // Habitaciones
-                        mostrarHabitaciones();
-                        break;
-                    case 3: // Tipos Habitación
+                    case 2: // Tipos Habitación
                         mostrarTiposHabitacion();
+                        break;
+                    case 3: // Habitaciones
+                        mostrarHabitaciones();
                         break;
                     case 4: // Reservas
                         mostrarReservas();
@@ -111,11 +111,12 @@ public class GestorVentanas {
     }
     
     public void mostrarHabitaciones() {
-        mostrarVentana(2);
+        habitacionesWindow.refrescarListaTipos();
+        mostrarVentana(3);
     }
     
     public void mostrarTiposHabitacion() {
-        mostrarVentana(3);
+        mostrarVentana(2);
     }
     
     public void mostrarReservas() {

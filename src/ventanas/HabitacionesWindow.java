@@ -7,6 +7,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -17,6 +18,7 @@ import componentes.PanelNavegacion;
 import componentes.TablaDatos;
 import utilidades.Constantes;
 import clases.GestionHabitaciones;
+import clases.GestionTiposHabitacion;
 import clases.Habitacion;
 
 /**
@@ -29,7 +31,7 @@ public class HabitacionesWindow {
     private PanelNavegacion panelNavegacion;
     private BarraEstado barraEstado;
     private CampoFormulario campoNumero;
-    private CampoFormulario campoTipo;
+    private ComboBox<String> cmbTipo;
     private CampoFormulario campoPiso;
     private CampoFormulario campoPrecio;
     private ComboBox<String> cmbCapacidad;
@@ -42,10 +44,12 @@ public class HabitacionesWindow {
     private CheckBox chkJacuzzi;
     private TablaDatos tablaHabitaciones;
     private GestionHabitaciones gestionHabitaciones;
-    
+    private GestionTiposHabitacion gestionTiposHabitacion;
+
     public HabitacionesWindow() {
-        // Obtener instancia compartida de gestión de habitaciones
-        gestionHabitaciones = utilidades.GestorDatos.getInstancia().getGestionHabitaciones();
+        utilidades.GestorDatos gd = utilidades.GestorDatos.getInstancia();
+        gestionHabitaciones = gd.getGestionHabitaciones();
+        gestionTiposHabitacion = gd.getGestionTiposHabitacion();
         
         root = new BorderPane();
         root.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
@@ -57,7 +61,7 @@ public class HabitacionesWindow {
         panelPrincipal.setStyle("-fx-background-color: #" + Constantes.COLOR_FONDO.toString().substring(2, 8) + ";");
         
         panelNavegacion = new PanelNavegacion();
-        panelNavegacion.seleccionarItem(2); // Habitaciones seleccionado
+        panelNavegacion.seleccionarItem(3); // Habitaciones seleccionado
         panelPrincipal.setLeft(panelNavegacion);
         
         VBox panelContenido = crearPanelContenido();
@@ -73,6 +77,24 @@ public class HabitacionesWindow {
     private void actualizarBarraEstado() {
         int cantidad = gestionHabitaciones.obtenerCantidad();
         barraEstado.setEstado(cantidad + " habitación" + (cantidad != 1 ? "es" : "") + " registrada" + (cantidad != 1 ? "s" : ""));
+    }
+
+    private static void aplicarFormatoSoloNumeros(CampoFormulario campo, int maxDigitos) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > maxDigitos) return null;
+            return change;
+        }));
+    }
+
+    private static void aplicarFormatoSoloNumerosDecimales(CampoFormulario campo) {
+        campo.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*\\.?[0-9]*")) return null;
+            return change;
+        }));
     }
     
     private VBox crearPanelContenido() {
@@ -113,18 +135,33 @@ public class HabitacionesWindow {
         
         HBox fila1 = new HBox(24);
         fila1.setAlignment(Pos.CENTER_LEFT);
-        campoNumero = new CampoFormulario("Número", 150);
-        campoTipo = new CampoFormulario("Tipo", 200);
-        campoPiso = new CampoFormulario("Piso", 100);
-        fila1.getChildren().addAll(campoNumero, campoTipo, campoPiso);
+        campoNumero = new CampoFormulario("Número *", 150);
+        aplicarFormatoSoloNumeros(campoNumero, 10);
+        HBox panelTipo = new HBox(12);
+        panelTipo.setAlignment(Pos.CENTER_LEFT);
+        Label lblTipo = new Label("Tipo *:");
+        lblTipo.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
+        lblTipo.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
+        cmbTipo = new ComboBox<>();
+        cmbTipo.getItems().setAll(java.util.Arrays.asList(gestionTiposHabitacion.obtenerNombresTipos()));
+        cmbTipo.setPrefWidth(200);
+        cmbTipo.setPrefHeight(24);
+        cmbTipo.setMinHeight(24);
+        cmbTipo.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbTipo, "Seleccionar tipo");
+        panelTipo.getChildren().addAll(lblTipo, cmbTipo);
+        campoPiso = new CampoFormulario("Piso *", 100);
+        aplicarFormatoSoloNumeros(campoPiso, 3);
+        fila1.getChildren().addAll(campoNumero, panelTipo, campoPiso);
         
         HBox fila2 = new HBox(24);
         fila2.setAlignment(Pos.CENTER_LEFT);
-        campoPrecio = new CampoFormulario("Precio/Noche", 120);
+        campoPrecio = new CampoFormulario("Precio/Noche *", 120);
+        aplicarFormatoSoloNumerosDecimales(campoPrecio);
         
         HBox panelCapacidad = new HBox(12);
         panelCapacidad.setAlignment(Pos.CENTER_LEFT);
-        Label lblCapacidad = new Label("Capacidad:");
+        Label lblCapacidad = new Label("Capacidad *:");
         lblCapacidad.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCapacidad.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbCapacidad = new ComboBox<>();
@@ -138,7 +175,7 @@ public class HabitacionesWindow {
         
         HBox panelEstado = new HBox(12);
         panelEstado.setAlignment(Pos.CENTER_LEFT);
-        Label lblEstado = new Label("Estado:");
+        Label lblEstado = new Label("Estado *:");
         lblEstado.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblEstado.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbEstado = new ComboBox<>();
@@ -234,73 +271,74 @@ public class HabitacionesWindow {
                            "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                            "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
         btnAgregar.setOnAction(_ -> {
-            // Validar campos
-            if (campoNumero.getValor().isEmpty() || campoTipo.getValor().isEmpty() || 
-                campoPiso.getValor().isEmpty() || campoPrecio.getValor().isEmpty() ||
+            String numeroVal = campoNumero.getValor() != null ? campoNumero.getValor().trim() : "";
+            String tipoVal = cmbTipo.getValue() != null ? cmbTipo.getValue().trim() : "";
+            String pisoVal = campoPiso.getValor() != null ? campoPiso.getValor().trim() : "";
+            String precioStr = campoPrecio.getValor() != null ? campoPrecio.getValor().trim() : "";
+            if (numeroVal.isEmpty() || tipoVal.isEmpty() || pisoVal.isEmpty() || precioStr.isEmpty() ||
                 cmbCapacidad.getValue() == null || cmbEstado.getValue() == null) {
-                ventanas.dialogos.DialogoMensaje dialogoError = 
+                ventanas.dialogos.DialogoMensaje dialogoError =
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                        "Por favor complete todos los campos obligatorios.",
+                        "Complete todos los campos obligatorios: Número, Tipo, Piso, Precio/Noche, Capacidad y Estado.",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
-            } else {
-                // Verificar si ya existe una habitación con ese número
-                if (gestionHabitaciones.buscarPorNumero(campoNumero.getValor()) != null) {
-                    ventanas.dialogos.DialogoMensaje dialogoError = 
+                return;
+            }
+            double precioVal;
+            try {
+                precioVal = Double.parseDouble(precioStr.replace(",", "."));
+                if (precioVal <= 0) {
+                    ventanas.dialogos.DialogoMensaje dialogoError =
                         new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                            "Ya existe una habitación con el número: " + campoNumero.getValor(),
+                            "El precio por noche debe ser mayor a 0.",
                             ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                     dialogoError.mostrar();
                     return;
                 }
-                
-                try {
-                    // Crear nueva habitación
-                    Habitacion nuevaHabitacion = new Habitacion();
-                    nuevaHabitacion.setNumero(campoNumero.getValor());
-                    nuevaHabitacion.setTipo(campoTipo.getValor());
-                    nuevaHabitacion.setPiso(campoPiso.getValor());
-                    nuevaHabitacion.setPrecioNoche(Double.parseDouble(campoPrecio.getValor()));
-                    nuevaHabitacion.setCapacidad(Integer.parseInt(cmbCapacidad.getValue()));
-                    nuevaHabitacion.setEstado(cmbEstado.getValue());
-                    nuevaHabitacion.setDescripcion(txtDescripcion.getText());
-                    nuevaHabitacion.setWifi(chkWifi.isSelected());
-                    nuevaHabitacion.setTv(chkTV.isSelected());
-                    nuevaHabitacion.setAc(chkAC.isSelected());
-                    nuevaHabitacion.setMinibar(chkMinibar.isSelected());
-                    nuevaHabitacion.setJacuzzi(chkJacuzzi.isSelected());
-                    
-                    // Agregar a la gestión
-                    if (gestionHabitaciones.agregar(nuevaHabitacion)) {
-                        // Actualizar tabla
-                        cargarDatosEnTabla();
-                        
-                        // Mostrar diálogo de éxito
-                        ventanas.dialogos.DialogoMensaje dialogoExito = 
-                            new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
-                                "La habitación ha sido registrada exitosamente.",
-                                ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
-                        dialogoExito.mostrar();
-                        
-                        // Actualizar barra de estado
-                        actualizarBarraEstado();
-                        
-                        // Limpiar formulario
-                        limpiarFormulario();
-                    } else {
-                        ventanas.dialogos.DialogoMensaje dialogoError = 
-                            new ventanas.dialogos.DialogoMensaje("Error",
-                                "No se pudo registrar la habitación. Intente nuevamente.",
-                                ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
-                        dialogoError.mostrar();
-                    }
-                } catch (NumberFormatException e) {
-                    ventanas.dialogos.DialogoMensaje dialogoError = 
-                        new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                            "El precio debe ser un número válido.",
-                            ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
-                    dialogoError.mostrar();
-                }
+            } catch (NumberFormatException e) {
+                ventanas.dialogos.DialogoMensaje dialogoError =
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "El precio debe ser un número válido.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            if (gestionHabitaciones.buscarPorNumero(numeroVal) != null) {
+                ventanas.dialogos.DialogoMensaje dialogoError =
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "Ya existe una habitación con el número: " + numeroVal,
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            Habitacion nuevaHabitacion = new Habitacion();
+            nuevaHabitacion.setNumero(numeroVal);
+            nuevaHabitacion.setTipo(tipoVal);
+            nuevaHabitacion.setPiso(pisoVal);
+            nuevaHabitacion.setPrecioNoche(precioVal);
+            nuevaHabitacion.setCapacidad(Integer.parseInt(cmbCapacidad.getValue()));
+            nuevaHabitacion.setEstado(cmbEstado.getValue());
+            nuevaHabitacion.setDescripcion(txtDescripcion.getText() != null ? txtDescripcion.getText().trim() : "");
+            nuevaHabitacion.setWifi(chkWifi.isSelected());
+            nuevaHabitacion.setTv(chkTV.isSelected());
+            nuevaHabitacion.setAc(chkAC.isSelected());
+            nuevaHabitacion.setMinibar(chkMinibar.isSelected());
+            nuevaHabitacion.setJacuzzi(chkJacuzzi.isSelected());
+            if (gestionHabitaciones.agregar(nuevaHabitacion)) {
+                cargarDatosEnTabla();
+                ventanas.dialogos.DialogoMensaje dialogoExito =
+                    new ventanas.dialogos.DialogoMensaje("Operación Exitosa",
+                        "La habitación ha sido registrada exitosamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.EXITO);
+                dialogoExito.mostrar();
+                actualizarBarraEstado();
+                limpiarFormulario();
+            } else {
+                ventanas.dialogos.DialogoMensaje dialogoError =
+                    new ventanas.dialogos.DialogoMensaje("Error",
+                        "No se pudo registrar la habitación. Intente nuevamente.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
             }
         });
         
@@ -415,14 +453,19 @@ public class HabitacionesWindow {
     public BorderPane getRoot() {
         return root;
     }
-    
+
+    /** Refresca el desplegable de tipos con la lista actual del gestor (llamar al mostrar esta ventana). */
+    public void refrescarListaTipos() {
+        cmbTipo.getItems().setAll(java.util.Arrays.asList(gestionTiposHabitacion.obtenerNombresTipos()));
+    }
+
     public PanelNavegacion getPanelNavegacion() {
         return panelNavegacion;
     }
     
     private void limpiarFormulario() {
         campoNumero.setValor("");
-        campoTipo.setValor("");
+        cmbTipo.getSelectionModel().clearSelection();
         campoPiso.setValor("");
         campoPrecio.setValor("");
         cmbCapacidad.getSelectionModel().clearSelection();

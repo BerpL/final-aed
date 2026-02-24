@@ -6,59 +6,101 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import utilidades.Constantes;
 
 /**
- * Diálogo para editar una reserva
- * Diseño exacto según aed.pen (versión simplificada)
+ * Diálogo para editar una reserva. Validaciones y campos obligatorios al guardar.
  */
 public class DialogoEditarReserva extends DialogoBase {
-    
-    public DialogoEditarReserva(String huesped, String habitacion, String checkIn, 
+
+    private ComboBox<String> cmbHuesped;
+    private ComboBox<String> cmbHabitacion;
+    private TextField txtCheckIn;
+    private TextField txtCheckOut;
+    private TextField txtNroHuespedes;
+    private ComboBox<String> cmbEstado;
+    private ComboBox<String> cmbTipoPago;
+
+    public DialogoEditarReserva(String huesped, String habitacion, String checkIn,
                                String checkOut, String nroHuespedes, String estado, String observaciones) {
-        super("Editar Reserva", Color.rgb(245, 158, 11), 600, 0); // #F59E0B, más ancho para labels
-        
-        // Definir colores para usar en los inputs
+        super("Editar Reserva", Color.rgb(245, 158, 11), 600, 0);
+
         String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
         String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
-        
+
         content.setSpacing(10);
-        // No sobrescribir padding - usar el de DialogoBase (20)
         content.setVisible(true);
         content.setManaged(true);
-        
-        // Fila 1: Huésped
-        agregarCombo("Huésped:", huesped, 200);
-        
-        // Fila 2: Habitación
-        agregarCombo("Habitación:", habitacion, 200);
-        
-        // Fila 3: Check-In
-        agregarCampo("Check-In:", checkIn, 140);
-        
-        // Fila 4: Check-Out
-        agregarCampo("Check-Out:", checkOut, 140);
-        
-        // Fila 5: Nro. Huéspedes
-        agregarCampo("Nro. Huéspedes:", nroHuespedes, 80);
-        
-        // Fila 6: Estado (campo adicional, se mantiene)
-        agregarCombo("Estado:", estado, 140);
-        
-        // Fila 7: Forma de Pago (igual que formulario principal)
+
+        // Fila 1: Huésped *
+        cmbHuesped = new ComboBox<>();
+        if (huesped != null && !huesped.isEmpty()) {
+            cmbHuesped.getItems().add(huesped);
+            cmbHuesped.setValue(huesped);
+        }
+        cmbHuesped.setPrefWidth(200);
+        cmbHuesped.setPrefHeight(24);
+        cmbHuesped.setMinHeight(24);
+        cmbHuesped.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbHuesped, "Seleccionar huésped");
+        content.getChildren().add(crearFilaCombo("Huésped *:", cmbHuesped));
+
+        // Fila 2: Habitación *
+        cmbHabitacion = new ComboBox<>();
+        if (habitacion != null && !habitacion.isEmpty()) {
+            cmbHabitacion.getItems().add(habitacion);
+            cmbHabitacion.setValue(habitacion);
+        }
+        cmbHabitacion.setPrefWidth(200);
+        cmbHabitacion.setPrefHeight(24);
+        cmbHabitacion.setMinHeight(24);
+        cmbHabitacion.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbHabitacion, "Seleccionar habitación");
+        content.getChildren().add(crearFilaCombo("Habitación *:", cmbHabitacion));
+
+        // Fila 3: Check-In * (fecha dd/MM/yyyy)
+        txtCheckIn = crearCampoConEstilo(checkIn != null ? checkIn : "", 140);
+        content.getChildren().add(crearFilaCampo("Check-In *:", txtCheckIn));
+
+        // Fila 4: Check-Out *
+        txtCheckOut = crearCampoConEstilo(checkOut != null ? checkOut : "", 140);
+        content.getChildren().add(crearFilaCampo("Check-Out *:", txtCheckOut));
+
+        // Fila 5: Nro. Huéspedes *
+        txtNroHuespedes = crearCampoConEstilo(nroHuespedes != null ? nroHuespedes : "", 80);
+        txtNroHuespedes.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > 2) return null;
+            return change;
+        }));
+        content.getChildren().add(crearFilaCampo("Nro. Huéspedes *:", txtNroHuespedes));
+
+        // Fila 6: Estado *
+        cmbEstado = new ComboBox<>();
+        cmbEstado.getItems().addAll("Pendiente", "Confirmada", "Completada", "Cancelada");
+        cmbEstado.setValue(estado != null && !estado.isEmpty() ? estado : "Pendiente");
+        cmbEstado.setPrefWidth(140);
+        cmbEstado.setPrefHeight(24);
+        cmbEstado.setMinHeight(24);
+        cmbEstado.setMaxHeight(24);
+        utilidades.EstiloComboBox.aplicarEstilo(cmbEstado, "Seleccionar estado");
+        content.getChildren().add(crearFilaCombo("Estado *:", cmbEstado));
+
+        // Fila 7: Forma de Pago *
         HBox filaTipoPago = new HBox(16);
         filaTipoPago.setAlignment(Pos.CENTER_LEFT);
-        Label lblTipoPago = new Label("Forma de Pago:");
+        Label lblTipoPago = new Label("Forma de Pago *:");
         lblTipoPago.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lblTipoPago.setTextFill(Color.rgb(0, 0, 0)); // #000000
+        lblTipoPago.setTextFill(Color.rgb(0, 0, 0));
         lblTipoPago.setStyle("-fx-text-fill: #000000;");
         lblTipoPago.setWrapText(false);
-        lblTipoPago.setVisible(true);
-        lblTipoPago.setManaged(true);
-        ComboBox<String> cmbTipoPago = new ComboBox<>();
+        cmbTipoPago = new ComboBox<>();
         cmbTipoPago.getItems().addAll("Tarjeta Crédito", "Efectivo", "Transferencia");
+        cmbTipoPago.setValue("Efectivo");
         cmbTipoPago.setPrefWidth(200);
         cmbTipoPago.setPrefHeight(24);
         cmbTipoPago.setMinHeight(24);
@@ -121,7 +163,37 @@ public class DialogoEditarReserva extends DialogoBase {
                            "-fx-padding: 6 20 6 20; " +
                            "-fx-cursor: hand;");
         btnGuardar.setOnAction(_ -> {
-            // TODO: Implementar guardado
+            String valHuesped = cmbHuesped.getValue() != null ? cmbHuesped.getValue().trim() : "";
+            String valHabitacion = cmbHabitacion.getValue() != null ? cmbHabitacion.getValue().trim() : "";
+            String valCheckIn = txtCheckIn.getText() != null ? txtCheckIn.getText().trim() : "";
+            String valCheckOut = txtCheckOut.getText() != null ? txtCheckOut.getText().trim() : "";
+            String valNro = txtNroHuespedes.getText() != null ? txtNroHuespedes.getText().trim() : "";
+            String valEstado = cmbEstado.getValue() != null ? cmbEstado.getValue().trim() : "";
+            String valPago = cmbTipoPago.getValue() != null ? cmbTipoPago.getValue().trim() : "";
+            if (valHuesped.isEmpty() || valHabitacion.isEmpty() || valCheckIn.isEmpty() || valCheckOut.isEmpty()
+                || valNro.isEmpty() || valEstado.isEmpty() || valPago.isEmpty()) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "Complete todos los campos obligatorios: Huésped, Habitación, Check-In, Check-Out, Nro. Huéspedes, Estado y Forma de Pago.",
+                    DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            int nro;
+            try {
+                nro = Integer.parseInt(valNro);
+                if (nro < 1) {
+                    DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                        "El número de huéspedes debe ser al menos 1.", DialogoMensaje.TipoMensaje.ERROR);
+                    d.mostrar();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "El número de huéspedes debe ser un número válido.", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            // TODO: actualizar reserva en gestor
             cerrar();
         });
         
@@ -143,47 +215,40 @@ public class DialogoEditarReserva extends DialogoBase {
         root.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
     }
     
-    private void agregarCampo(String etiqueta, String valor, int ancho) {
-        HBox fila = new HBox(16);
-        fila.setAlignment(Pos.CENTER_LEFT);
-        Label lbl = new Label(etiqueta);
-        lbl.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lbl.setTextFill(Color.rgb(0, 0, 0)); // #000000
-        lbl.setStyle("-fx-text-fill: #000000;");
-        lbl.setWrapText(false);
-        lbl.setVisible(true);
-        lbl.setManaged(true);
+    private TextField crearCampoConEstilo(String valor, int ancho) {
+        String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
+        String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
         TextField txt = new TextField(valor);
         txt.setPrefWidth(ancho);
         txt.setPrefHeight(24);
         txt.setMinHeight(24);
         txt.setMaxHeight(24);
-        String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
-        String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
         txt.setStyle("-fx-border-color: #" + colorBorde + "; -fx-background-color: #" + colorFondo + "; -fx-padding: 4 8 4 8; -fx-effect: null;");
-        fila.getChildren().addAll(lbl, txt);
-        content.getChildren().add(fila);
+        return txt;
     }
-    
-    private void agregarCombo(String etiqueta, String valor, int ancho) {
+
+    private HBox crearFilaCampo(String etiqueta, TextField txt) {
         HBox fila = new HBox(16);
         fila.setAlignment(Pos.CENTER_LEFT);
         Label lbl = new Label(etiqueta);
         lbl.setFont(javafx.scene.text.Font.font("Arial", 11));
-        lbl.setTextFill(Color.rgb(0, 0, 0)); // #000000
+        lbl.setTextFill(Color.rgb(0, 0, 0));
         lbl.setStyle("-fx-text-fill: #000000;");
         lbl.setWrapText(false);
-        lbl.setVisible(true);
-        lbl.setManaged(true);
-        ComboBox<String> combo = new ComboBox<>();
-        combo.setValue(valor);
-        combo.setPrefWidth(ancho);
-        combo.setPrefHeight(24);
-        combo.setMinHeight(24);
-        combo.setMaxHeight(24);
-        utilidades.EstiloComboBox.aplicarEstilo(combo, "Seleccionar");
+        fila.getChildren().addAll(lbl, txt);
+        return fila;
+    }
+
+    private HBox crearFilaCombo(String etiqueta, ComboBox<String> combo) {
+        HBox fila = new HBox(16);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        Label lbl = new Label(etiqueta);
+        lbl.setFont(javafx.scene.text.Font.font("Arial", 11));
+        lbl.setTextFill(Color.rgb(0, 0, 0));
+        lbl.setStyle("-fx-text-fill: #000000;");
+        lbl.setWrapText(false);
         fila.getChildren().addAll(lbl, combo);
-        content.getChildren().add(fila);
+        return fila;
     }
 }
 

@@ -7,6 +7,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -124,7 +125,7 @@ public class ReservasWindow {
         
         HBox panelHuesped = new HBox(12);
         panelHuesped.setAlignment(Pos.CENTER_LEFT);
-        Label lblHuesped = new Label("Huésped:");
+        Label lblHuesped = new Label("Huésped *:");
         lblHuesped.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblHuesped.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbHuesped = new ComboBox<>();
@@ -139,7 +140,7 @@ public class ReservasWindow {
         
         HBox panelHabitacion = new HBox(12);
         panelHabitacion.setAlignment(Pos.CENTER_LEFT);
-        Label lblHabitacion = new Label("Habitación:");
+        Label lblHabitacion = new Label("Habitación *:");
         lblHabitacion.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblHabitacion.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbHabitacion = new ComboBox<>();
@@ -160,7 +161,7 @@ public class ReservasWindow {
         // DatePicker Check-In
         HBox panelCheckIn = new HBox(12);
         panelCheckIn.setAlignment(Pos.CENTER_LEFT);
-        Label lblCheckIn = new Label("Check-In:");
+        Label lblCheckIn = new Label("Check-In *:");
         lblCheckIn.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCheckIn.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         datePickerCheckIn = new DatePicker();
@@ -176,7 +177,7 @@ public class ReservasWindow {
         // DatePicker Check-Out
         HBox panelCheckOut = new HBox(12);
         panelCheckOut.setAlignment(Pos.CENTER_LEFT);
-        Label lblCheckOut = new Label("Check-Out:");
+        Label lblCheckOut = new Label("Check-Out *:");
         lblCheckOut.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblCheckOut.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         datePickerCheckOut = new DatePicker();
@@ -214,11 +215,17 @@ public class ReservasWindow {
         
         HBox fila3 = new HBox(24);
         fila3.setAlignment(Pos.CENTER_LEFT);
-        campoNumHuespedes = new CampoFormulario("N° Huéspedes", 120);
+        campoNumHuespedes = new CampoFormulario("N° Huéspedes *", 120);
+        campoNumHuespedes.getCampo().setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > 2) return null;
+            return change;
+        }));
         
         HBox panelTipoPago = new HBox(12);
         panelTipoPago.setAlignment(Pos.CENTER_LEFT);
-        Label lblTipoPago = new Label("Forma de Pago:");
+        Label lblTipoPago = new Label("Forma de Pago *:");
         lblTipoPago.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 12));
         lblTipoPago.setTextFill(Constantes.COLOR_TEXTO_PRINCIPAL);
         cmbTipoPago = new ComboBox<>();
@@ -279,24 +286,52 @@ public class ReservasWindow {
                              "; -fx-border-color: #" + Constantes.COLOR_PRIMARIO_OSCURO.toString().substring(2, 8) + 
                              "; -fx-border-width: 1; -fx-padding: 6 16 6 16;");
         btnRegistrar.setOnAction(_ -> {
-            // Validar campos
-            if (cmbHuesped.getSelectionModel().getSelectedIndex() < 0 || 
-                cmbHabitacion.getSelectionModel().getSelectedIndex() < 0 ||
+            String numHuespedesStr = campoNumHuespedes.getValor() != null ? campoNumHuespedes.getValor().trim() : "";
+            if (cmbHuesped.getValue() == null || cmbHuesped.getValue().trim().isEmpty() ||
+                cmbHabitacion.getValue() == null || cmbHabitacion.getValue().trim().isEmpty() ||
                 datePickerCheckIn.getValue() == null || datePickerCheckOut.getValue() == null ||
-                campoNumHuespedes.getValor().isEmpty() || cmbTipoPago.getValue() == null) {
-                ventanas.dialogos.DialogoMensaje dialogoError = 
+                numHuespedesStr.isEmpty() || cmbTipoPago.getValue() == null || cmbTipoPago.getValue().trim().isEmpty()) {
+                ventanas.dialogos.DialogoMensaje dialogoError =
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
-                        "Por favor complete todos los campos obligatorios.",
+                        "Complete todos los campos obligatorios: Huésped, Habitación, Check-In, Check-Out, N° Huéspedes y Forma de Pago.",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
                 return;
             }
-            
-            // Obtener datos seleccionados
+            int numeroHuespedes;
+            try {
+                numeroHuespedes = Integer.parseInt(numHuespedesStr);
+                if (numeroHuespedes < 1) {
+                    ventanas.dialogos.DialogoMensaje d = new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "El número de huéspedes debe ser al menos 1.", ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                    d.mostrar();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ventanas.dialogos.DialogoMensaje d = new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                    "El número de huéspedes debe ser un número válido.", ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            if (!datePickerCheckOut.getValue().isAfter(datePickerCheckIn.getValue()) &&
+                !datePickerCheckOut.getValue().equals(datePickerCheckIn.getValue())) {
+                ventanas.dialogos.DialogoMensaje d = new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                    "La fecha de Check-Out debe ser igual o posterior al Check-In.", ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
             String nombreHuesped = cmbHuesped.getValue();
-            String numeroHabitacion = cmbHabitacion.getValue().split(" - ")[0]; // Extraer número de "101 - Suite"
+            String numeroHabitacion = cmbHabitacion.getValue().split(" - ")[0];
             LocalDate checkIn = datePickerCheckIn.getValue();
             LocalDate checkOut = datePickerCheckOut.getValue();
+            Habitacion habitacionCheck = gestionHabitaciones.buscarPorNumero(numeroHabitacion);
+            if (habitacionCheck != null && numeroHuespedes > habitacionCheck.getCapacidad()) {
+                ventanas.dialogos.DialogoMensaje d = new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                    "El número de huéspedes no puede superar la capacidad de la habitación (" + habitacionCheck.getCapacidad() + ").",
+                    ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
             
             // Verificar disponibilidad
             if (!gestionReservas.estaDisponible(numeroHabitacion, checkIn, checkOut)) {
@@ -341,12 +376,11 @@ public class ReservasWindow {
                 
                 // Calcular total
                 int numeroNoches = (int) java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
-                int numeroHuespedes = Integer.parseInt(campoNumHuespedes.getValor());
                 double total = habitacion.getPrecioNoche() * numeroNoches;
                 if (chkDesayuno.isSelected()) total += 10.00 * numeroNoches * numeroHuespedes;
                 if (chkParking.isSelected()) total += 5.00 * numeroNoches;
                 if (chkSpa.isSelected()) total += 20.00 * numeroNoches;
-                
+
                 // Crear nueva reserva
                 Reserva nuevaReserva = new Reserva();
                 nuevaReserva.setIdHuesped(huesped.getId());

@@ -6,6 +6,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import utilidades.Constantes;
@@ -29,7 +30,7 @@ public class DialogoEditarHuesped extends DialogoBase {
     private CheckBox checkVip;
     private CheckBox checkNewsletter;
     
-    public DialogoEditarHuesped(String dni, String nombres, String apellidos, 
+    public DialogoEditarHuesped(String tipoDoc, String dni, String nombres, String apellidos, 
                                String telefono, String email, String nacionalidad, boolean vip) {
         super("Editar Huésped", Color.rgb(245, 158, 11), 520, 0); // #F59E0B, un poco más ancho para labels
         
@@ -41,35 +42,37 @@ public class DialogoEditarHuesped extends DialogoBase {
         // Campo: DNI (igual que formulario principal)
         HBox filaDni = new HBox(16);
         filaDni.setAlignment(Pos.CENTER_LEFT);
-        Label lblDni = new Label("DNI:");
+        Label lblDni = new Label("Documento *:");
         lblDni.setFont(javafx.scene.text.Font.font("Arial", 11));
         lblDni.setTextFill(Color.rgb(51, 51, 51)); // #333333
         lblDni.setStyle("-fx-text-fill: #333333; -fx-font-weight: 500;");
         lblDni.setWrapText(false);
         lblDni.setVisible(true);
         lblDni.setManaged(true);
-        txtDni = new TextField(dni);
+        String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
+        String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
+        txtDni = new TextField(dni != null ? dni : "");
         txtDni.setPrefWidth(100);
         txtDni.setPrefHeight(24);
         txtDni.setMinHeight(24);
         txtDni.setMaxHeight(24);
-        String colorBorde = Constantes.COLOR_BORDE_OSCURO.toString().substring(2, 8);
-        String colorFondo = Constantes.COLOR_BLANCO.toString().substring(2, 8);
         txtDni.setStyle("-fx-border-color: #" + colorBorde + "; -fx-background-color: #" + colorFondo + "; -fx-padding: 4 8 4 8; -fx-effect: null;");
+        aplicarFormatoSoloNumeros(txtDni, 12);
         filaDni.getChildren().addAll(lblDni, txtDni);
         content.getChildren().add(filaDni);
         
         // Campo: Nombres (igual que formulario principal)
         HBox filaNombres = new HBox(16);
         filaNombres.setAlignment(Pos.CENTER_LEFT);
-        Label lblNombres = new Label("Nombres:");
+        Label lblNombres = new Label("Nombres *:");
         lblNombres.setFont(javafx.scene.text.Font.font("Arial", 11));
         lblNombres.setTextFill(Color.rgb(51, 51, 51)); // #333333
         lblNombres.setStyle("-fx-text-fill: #333333; -fx-font-weight: 500;");
         lblNombres.setWrapText(false);
         lblNombres.setVisible(true);
         lblNombres.setManaged(true);
-        txtNombres = new TextField(nombres);
+        txtNombres = new TextField(nombres != null ? nombres : "");
+        aplicarFormatoSoloLetrasYEspacios(txtNombres);
         txtNombres.setPrefWidth(200);
         txtNombres.setPrefHeight(24);
         txtNombres.setMinHeight(24);
@@ -81,14 +84,15 @@ public class DialogoEditarHuesped extends DialogoBase {
         // Campo: Apellidos (igual que formulario principal)
         HBox filaApellidos = new HBox(16);
         filaApellidos.setAlignment(Pos.CENTER_LEFT);
-        Label lblApellidos = new Label("Apellidos:");
+        Label lblApellidos = new Label("Apellidos *:");
         lblApellidos.setFont(javafx.scene.text.Font.font("Arial", 11));
         lblApellidos.setTextFill(Color.rgb(51, 51, 51)); // #333333
         lblApellidos.setStyle("-fx-text-fill: #333333; -fx-font-weight: 500;");
         lblApellidos.setWrapText(false);
         lblApellidos.setVisible(true);
         lblApellidos.setManaged(true);
-        txtApellidos = new TextField(apellidos);
+        txtApellidos = new TextField(apellidos != null ? apellidos : "");
+        aplicarFormatoSoloLetrasYEspacios(txtApellidos);
         txtApellidos.setPrefWidth(240);
         txtApellidos.setPrefHeight(24);
         txtApellidos.setMinHeight(24);
@@ -107,7 +111,8 @@ public class DialogoEditarHuesped extends DialogoBase {
         lblTelefono.setWrapText(false);
         lblTelefono.setVisible(true);
         lblTelefono.setManaged(true);
-        txtTelefono = new TextField(telefono);
+        txtTelefono = new TextField(telefono != null ? telefono : "");
+        aplicarFormatoTelefono(txtTelefono);
         txtTelefono.setPrefWidth(100);
         txtTelefono.setPrefHeight(24);
         txtTelefono.setMinHeight(24);
@@ -126,7 +131,7 @@ public class DialogoEditarHuesped extends DialogoBase {
         lblEmail.setWrapText(false);
         lblEmail.setVisible(true);
         lblEmail.setManaged(true);
-        txtEmail = new TextField(email);
+        txtEmail = new TextField(email != null ? email : "");
         txtEmail.setPrefWidth(260);
         txtEmail.setPrefHeight(24);
         txtEmail.setMinHeight(24);
@@ -176,7 +181,7 @@ public class DialogoEditarHuesped extends DialogoBase {
         // Campo: Tipo Doc
         HBox filaTipoDoc = new HBox(16);
         filaTipoDoc.setAlignment(Pos.CENTER_LEFT);
-        Label lblTipoDoc = new Label("Tipo Doc:");
+        Label lblTipoDoc = new Label("Tipo Doc *:");
         lblTipoDoc.setFont(javafx.scene.text.Font.font("Arial", 11));
         lblTipoDoc.setTextFill(Color.rgb(0, 0, 0)); // #000000
         lblTipoDoc.setStyle("-fx-text-fill: #000000;");
@@ -185,6 +190,11 @@ public class DialogoEditarHuesped extends DialogoBase {
         lblTipoDoc.setManaged(true);
         comboTipoDoc = new ComboBox<>();
         comboTipoDoc.getItems().addAll("DNI", "Pasaporte", "Carné Extranjería");
+        if (tipoDoc != null && comboTipoDoc.getItems().contains(tipoDoc)) {
+            comboTipoDoc.setValue(tipoDoc);
+        } else {
+            comboTipoDoc.setValue("DNI");
+        }
         comboTipoDoc.setPrefWidth(160);
         comboTipoDoc.setPrefHeight(24);
         comboTipoDoc.setMinHeight(24);
@@ -275,7 +285,30 @@ public class DialogoEditarHuesped extends DialogoBase {
                            "-fx-padding: 6 20 6 20; " +
                            "-fx-cursor: hand;");
         btnGuardar.setOnAction(_ -> {
-            // TODO: Implementar guardado
+            String docVal = txtDni.getText() != null ? txtDni.getText().trim() : "";
+            String nombresVal = txtNombres.getText() != null ? txtNombres.getText().trim() : "";
+            String apellidosVal = txtApellidos.getText() != null ? txtApellidos.getText().trim() : "";
+            String emailVal = txtEmail.getText() != null ? txtEmail.getText().trim() : "";
+            String tipoDocVal = comboTipoDoc.getValue() != null ? comboTipoDoc.getValue() : "DNI";
+            if (docVal.isEmpty() || nombresVal.isEmpty() || apellidosVal.isEmpty()) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "Complete los campos obligatorios: Documento, Nombres y Apellidos.", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            if (!esDocumentoValido(tipoDocVal, docVal)) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "DNI debe tener exactamente 8 dígitos. Otros documentos: solo números (máx. 12).", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            if (!esEmailValido(emailVal)) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "El formato del correo electrónico no es válido (ejemplo: usuario@dominio.com).", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            // TODO: Implementar guardado (actualizar en gestor por documento o id)
             cerrar();
         });
         
@@ -295,6 +328,44 @@ public class DialogoEditarHuesped extends DialogoBase {
         
         // Asegurar que el diálogo ajuste su altura dinámicamente según el contenido
         root.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
+    }
+    
+    private static void aplicarFormatoSoloNumeros(TextField campo, int maxDigitos) {
+        campo.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9]*") || newText.length() > maxDigitos) return null;
+            return change;
+        }));
+    }
+    
+    private static void aplicarFormatoSoloLetrasYEspacios(TextField campo) {
+        campo.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]*")) return null;
+            return change;
+        }));
+    }
+    
+    private static void aplicarFormatoTelefono(TextField campo) {
+        campo.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) return change;
+            if (!newText.matches("[0-9+\\s-]*") || newText.length() > 15) return null;
+            return change;
+        }));
+    }
+    
+    private static boolean esEmailValido(String email) {
+        if (email == null || email.trim().isEmpty()) return true;
+        return email.matches("^[^@]+@[^@]+\\.[^@]+$");
+    }
+    
+    private static boolean esDocumentoValido(String tipoDoc, String documento) {
+        if (documento == null || documento.trim().isEmpty()) return false;
+        if ("DNI".equals(tipoDoc)) return documento.matches("[0-9]{8}");
+        return documento.matches("[0-9]{1,12}");
     }
 }
 

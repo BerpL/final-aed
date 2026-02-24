@@ -37,8 +37,8 @@ public class PanelNavegacion extends VBox {
         getChildren().add(seccionPerfil);
         
         // Items de navegación (incluyendo "Navegación" como primer item)
-        String[] items = {"Navegación", "Huéspedes", "Habitaciones", "Tipos Habitación", "Reservas", "Reportes"};
-        String[] iconos = {"navegacion", "usuarios", "cama", "puerta", "calendario", "grafico"};
+        String[] items = {"Navegación", "Huéspedes", "Tipos Habitación", "Habitaciones", "Reservas", "Reportes"};
+        String[] iconos = {"navegacion", "usuarios", "puerta", "cama", "calendario", "grafico"};
         itemsNavegacion = new HBox[items.length];
         
         for (int i = 0; i < items.length; i++) {
