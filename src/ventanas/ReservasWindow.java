@@ -563,14 +563,16 @@ public class ReservasWindow {
         chkSpa.setSelected(false);
     }
     
-    private void actualizarComboHabitaciones() {
+    /** Refresca el desplegable de habitaciones desde el gestor (disponibles). Llamar al mostrar esta ventana. */
+    public void actualizarComboHabitaciones() {
+        if (cmbHabitacion == null) return;
         cmbHabitacion.getItems().clear();
         java.util.ArrayList<Habitacion> habitaciones = gestionHabitaciones.obtenerDisponibles();
         for (Habitacion h : habitaciones) {
             cmbHabitacion.getItems().add(h.getNumero() + " - " + h.getTipo());
         }
     }
-    
+
     public void actualizarComboHuespedes() {
         if (cmbHuesped != null) {
             cmbHuesped.getItems().clear();

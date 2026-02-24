@@ -120,9 +120,9 @@ public class GestorVentanas {
     }
     
     public void mostrarReservas() {
-        mostrarVentana(4);
-        // Actualizar ComboBox de huéspedes cuando se muestra la ventana
         reservasWindow.actualizarComboHuespedes();
+        reservasWindow.actualizarComboHabitaciones();
+        mostrarVentana(4);
     }
     
     public void mostrarReportes() {

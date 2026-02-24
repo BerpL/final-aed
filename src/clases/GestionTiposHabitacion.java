@@ -88,7 +88,20 @@ public class GestionTiposHabitacion {
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Busca un tipo de habitación por su nombre
+	 */
+	public TipoHabitacion buscarPorNombre(String nombre) {
+		if (nombre == null) return null;
+		for (int i = 0; i < cantidad; i++) {
+			if (nombre.equals(listaTipos[i].getNombre())) {
+				return listaTipos[i];
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Actualiza un tipo de habitación existente
 	 */

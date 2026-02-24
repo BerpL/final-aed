@@ -96,6 +96,14 @@ public class DialogoEditarHabitacion extends DialogoBase {
         txtPrecio = crearCampoConEstilo(precioLimpio, 120);
         aplicarFormatoSoloNumerosDecimales(txtPrecio);
         content.getChildren().add(crearFilaCampo("Precio/Noche *:", txtPrecio));
+        comboTipo.valueProperty().addListener((_, _, nombreTipo) -> {
+            if (nombreTipo != null && !nombreTipo.isEmpty() && txtPrecio != null) {
+                clases.TipoHabitacion t = utilidades.GestorDatos.getInstancia().getGestionTiposHabitacion().buscarPorNombre(nombreTipo);
+                if (t != null) {
+                    txtPrecio.setText(String.format("%.2f", t.getPrecioBase()).replace(",", "."));
+                }
+            }
+        });
 
         // Fila 6: Estado
         HBox fila6 = new HBox(16);
@@ -204,6 +212,13 @@ public class DialogoEditarHabitacion extends DialogoBase {
             } catch (NumberFormatException e) {
                 DialogoMensaje d = new DialogoMensaje("Error de Validación",
                     "El precio debe ser un número válido.", DialogoMensaje.TipoMensaje.ERROR);
+                d.mostrar();
+                return;
+            }
+            clases.TipoHabitacion tipoSel = utilidades.GestorDatos.getInstancia().getGestionTiposHabitacion().buscarPorNombre(tipoVal);
+            if (tipoSel != null && precioVal < tipoSel.getPrecioBase()) {
+                DialogoMensaje d = new DialogoMensaje("Error de Validación",
+                    "El precio por noche no puede ser menor al precio base del tipo (" + String.format("%.2f", tipoSel.getPrecioBase()) + ").", DialogoMensaje.TipoMensaje.ERROR);
                 d.mostrar();
                 return;
             }

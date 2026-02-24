@@ -149,6 +149,14 @@ public class HabitacionesWindow {
         cmbTipo.setMinHeight(24);
         cmbTipo.setMaxHeight(24);
         utilidades.EstiloComboBox.aplicarEstilo(cmbTipo, "Seleccionar tipo");
+        cmbTipo.valueProperty().addListener((_, _, nombreTipo) -> {
+            if (nombreTipo != null && !nombreTipo.isEmpty()) {
+                clases.TipoHabitacion t = gestionTiposHabitacion.buscarPorNombre(nombreTipo);
+                if (t != null) {
+                    campoPrecio.setValor(String.format("%.2f", t.getPrecioBase()).replace(",", "."));
+                }
+            }
+        });
         panelTipo.getChildren().addAll(lblTipo, cmbTipo);
         campoPiso = new CampoFormulario("Piso *", 100);
         aplicarFormatoSoloNumeros(campoPiso, 3);
@@ -299,6 +307,15 @@ public class HabitacionesWindow {
                 ventanas.dialogos.DialogoMensaje dialogoError =
                     new ventanas.dialogos.DialogoMensaje("Error de Validación",
                         "El precio debe ser un número válido.",
+                        ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
+                dialogoError.mostrar();
+                return;
+            }
+            clases.TipoHabitacion tipoSel = gestionTiposHabitacion.buscarPorNombre(tipoVal);
+            if (tipoSel != null && precioVal < tipoSel.getPrecioBase()) {
+                ventanas.dialogos.DialogoMensaje dialogoError =
+                    new ventanas.dialogos.DialogoMensaje("Error de Validación",
+                        "El precio por noche no puede ser menor al precio base del tipo (" + String.format("%.2f", tipoSel.getPrecioBase()) + ").",
                         ventanas.dialogos.DialogoMensaje.TipoMensaje.ERROR);
                 dialogoError.mostrar();
                 return;
